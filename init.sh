@@ -1,5 +1,4 @@
-mkdir Data
-cd Data/
-wget http://computing.ece.vt.edu/~abhshkdz/data/visdial/visdial_0.5_train.json
-wget http://computing.ece.vt.edu/~abhshkdz/data/visdial/visdial_0.5_val.json
-wget http://computing.ece.vt.edu/~abhshkdz/data/visdial/visdial_0.5_test.json
+# run this to setup the repository with appropriate data
+cd Data
+chmod +x download.sh
+./download.sh
