@@ -3,3 +3,4 @@ Data/Training/
 Data/Validation/
 Literature/
 Data/vgg_feats.mat
+*.pyc
