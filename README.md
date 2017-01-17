@@ -9,4 +9,4 @@ chmod +x ./init.sh
 ./init.sh
 '''
 
-This will setup the "Data" folder and download the dataset automatically.
+This will do a setup up the repository for use.
