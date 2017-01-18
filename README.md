@@ -12,4 +12,4 @@ chmod +x ./init.sh
 This will do a setup up the repository for use.
 
 Dependencies:
-[Theano](http://deeplearning.net/software/theano/), [Keras](https://keras.io/)
+[Theano](http://deeplearning.net/software/theano/), [Keras](https://keras.io/), [Gensim](https://radimrehurek.com/gensim/models/word2vec.html)

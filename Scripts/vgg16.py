@@ -1,6 +1,5 @@
 # utility file for vgg16 feature extraction
 # use model.predict(process_image(img_path)) to get the fc2 layer output
-
 from keras.applications.vgg16 import VGG16
 from keras.preprocessing import image
 from keras.applications.vgg16 import preprocess_input
