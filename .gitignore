@@ -4,3 +4,5 @@ Data/Validation/
 Literature/
 Data/vgg_feats.mat
 *.pyc
+Data/Embeddings/GoogleNews-vectors-negative300.bin.gz
+Data/Embeddings/glove.6B.300d.txt
