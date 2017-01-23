@@ -27,7 +27,7 @@ def process_image(img_path):
     x = preprocess_input(x)
     return x
 
-def get_embeddings(vocab, glove=True, path, EMBEDDING_SIZE=300):
+def get_embeddings(vocab, path, glove=True, EMBEDDING_SIZE=300):
 	'''
 	vocab: Given a dictionary of words, returns an embedding matrix.
 		   Each word should be mapped to a unique index < len(vocab).
@@ -38,4 +38,16 @@ def get_embeddings(vocab, glove=True, path, EMBEDDING_SIZE=300):
 	'''
 
 	print "Constructing the embedding matrix of Vocabulary"
-	embeddings=np.zeros(len(vocab),)
+	embeddings=np.zeros(len(vocab),EMBEDDING_SIZE)
+
+	# do not read in the whole embeddings file
+	if glove:
+		with open(path) as embeddings_file:
+			for line in embeddings_file:
+				entry=line.split()
+				if entry[0] in vocab:
+					embeddings[vocab[entry[0]]]=np.asarray(values[1:], dtype='float32')
+
+	print "Constructed Embedding Matrix"
+	return embeddings
+
