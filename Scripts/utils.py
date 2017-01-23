@@ -1,11 +1,11 @@
-# utility file for vgg16 feature extraction
-# use model.predict(process_image(img_path)) to get the fc2 layer output
+# utility file
 from keras.applications.vgg16 import VGG16
 from keras.preprocessing import image
 from keras.applications.vgg16 import preprocess_input
 from keras.models import Model
 import numpy as np
 
+# use model.predict(process_image(img_path)) to get the fc2 layer output
 def vgg16():
 	'''
 	Returns the VGG16 model which outputs the 4096 dimensional embeddings
@@ -27,7 +27,7 @@ def process_image(img_path):
 	x = preprocess_input(x)
 	return x
 
-# typical path for glove embeddings if setup using default scripts
+# Typical path for glove embeddings if setup using default scripts
 # '../../Data/Embeddings/glove.6B.300d.txt'
 def get_embeddings(vocab, path, glove=True, EMBEDDING_SIZE=300):
 	'''

@@ -1,3 +1,4 @@
+#!/bin/bash
 # sets up the data folder and downloads the appropriate datasets into respective folders
 
 # train

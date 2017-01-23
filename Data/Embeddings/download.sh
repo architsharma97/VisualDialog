@@ -1,3 +1,4 @@
+#!/bin/bash
 # uncomment files to download: defaults to glove embeddings
 # pre-trained glove embeddings with 400k words
 # defaults to using the 300 dimensional embeddings from {50,100,200,300}
