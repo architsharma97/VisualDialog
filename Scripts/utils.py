@@ -5,6 +5,7 @@ from keras.applications.vgg16 import preprocess_input
 from keras.models import Model
 import numpy as np
 from gensim.models import Word2Vec
+import scipy.io
 
 # use model.predict(process_image(img_path)) to get the fc2 layer output
 def vgg16():
@@ -64,3 +65,23 @@ def get_embeddings(vocab, path, glove=True, EMBEDDING_SIZE=300):
 	print "Constructed Embedding Matrix"
 	return embeddings
 
+def get_vgg16_features(coco_ids, path):
+	'''
+	coco_ids: list of image ids in MS COCO dataset from train/val split.
+	path: path to the data folder. Path should end in '/'
+	'''
+	print "Getting map from MS COCO IDs to VGG16 features"
+	maplist=open(path+'coco_vgg_IDMap.txt','r').read().splitlines()
+	featmap={}
+	for entry in maplist:
+		entries=entry.split()
+		featmap[int(entries[0])]=int(entries[1])
+
+	print "Building feature matrix for given images"
+	feature_matrix=np.zeros((len(coco_ids),4096))
+	VGGfeatures=np.transpose(scipy.io.loadmat(path+'vgg_feats.mat')['feats'])
+
+	for count, idx in enumerate(coco_ids):
+		feature_matrix[count]=VGGfeatures[featmap[idx]]
+	
+	return feature_matrix
