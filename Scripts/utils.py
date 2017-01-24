@@ -39,6 +39,9 @@ def get_embeddings(vocab, path, glove=True, EMBEDDING_SIZE=300):
 	path: Provide a path to the required embeddings.
 	EMBEDDING_SIZE: Size of the embeddings in the described file. 
 	Defaults to 300.
+
+	Example function call for Word2Vec
+	get_embeddings(vocab,'../Data/Embeddings/GoogleNews-vectors-negative300.bin.gz',glove=False)'
 	'''
 
 	embeddings=np.zeros((len(vocab),EMBEDDING_SIZE))
