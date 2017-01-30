@@ -22,6 +22,7 @@ wget "http://cs.stanford.edu/people/karpathy/deepimagesent/coco.zip"
 unzip coco.zip -d .
 cp ./coco/vgg_feats.mat .
 rm -rf ./coco/
+rm -rf coco.zip
 
 # optionally download the embeddings : Uncomment './download.sh'
 # check download script in embedding folder for more details
