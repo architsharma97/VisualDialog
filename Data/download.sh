@@ -27,4 +27,4 @@ rm -rf ./coco/
 # check download script in embedding folder for more details
 cd Embeddings
 chmod +x ./download.sh
-# ./download.sh
+./download.sh
