@@ -7,7 +7,7 @@
 wget http://nlp.stanford.edu/data/glove.6B.zip
 unzip glove.6B.zip .
 mv /glove.6B/glove.6B.300d.txt .
-# rm -rf glove.6B/
+rm -rf glove.6B/
 rm -rf glove.6B.zip
 
 # pre-trained glove embeddings with 1.9M words and 300d embeddings
