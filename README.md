@@ -4,10 +4,10 @@ Work on most of this project has been done in [Theano](http://deeplearning.net/s
 
 To begin using this repository, clone it and run the following commands once you are in the cloned folder.
 
-'''
+```
 chmod +x ./init.sh
 ./init.sh
-'''
+```
 
 This will do a setup up the repository for use.
 

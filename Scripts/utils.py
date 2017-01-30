@@ -60,8 +60,7 @@ def get_embeddings(vocab, path, glove=True, EMBEDDING_SIZE=300):
 		model=Word2Vec.load_word2vec_format(path,binary=True)
 		for key, idx in vocab.iteritems():
 			embeddings[idx]=model[key]
-		# print "Cannot construct Embedding matrix from pre-trained Word2Vec"
-
+		
 	print "Constructed Embedding Matrix"
 	return embeddings
 
