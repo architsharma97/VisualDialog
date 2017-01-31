@@ -1,6 +1,7 @@
 # preprocesses data to provide trainable data
 # refer to http://visualdialog.org/data
 # not the most optimized files, lot of code in rudimentary python
+# this file preprocesses the data to be setup for generative lstms
 import sys
 sys.path.append("../")
 import json
@@ -32,7 +33,7 @@ def preprocess(path_to_data,
 	if split=='Train':
 		data=json.load(open(path_to_data+'Training/visdial_0.5_train.json'))
 	elif split=='Val':
-		# Vaidation split should not have to create vocabulary or embedding matrix
+		# Validation split should not have to create vocabulary or embedding matrix
 		data=json.load(open(path_to_data+'Validation/visdial_0.5_val.json'))
 		load_dict=True
 		load_embedding_matrix=True
@@ -133,12 +134,57 @@ def preprocess(path_to_data,
 	# all images have 10 question-answer pairs in sequence
 	image_ids=np.zeros((len(data),))
 	questions_tensor=np.zeros((len(data)*10,max_len_question, embeddings.shape[1]))
-	answers_tensor=np.zeros((len(data)*10, max_len_answer, embeddings.shape[1]))
+	# caption is kept as the first answer
+	answers_tensor=np.zeros((len(data)*11, max_len_answer, embeddings.shape[1]))
 
+	# add eos symbol always
+	# check for unknown symbols
 	for idx in range(len(data)):
+		# image coco id extracted
 		image_ids[idx]=int(data[idx]['image_id'])
 
+		# tokenization of caption
+		tokens=nltk.word_tokenize(data[idx]['caption'])
+		for i, token in enumerate(tokens):
+			# maximum tokens in answer/caption exceeded
+			if i<max_len_answer-1:
+				if token in word_idx_map:
+					answers_tensor[idx*11, i, :]=embeddings[word_idx_map[token]]
+				else:
+					answers_tensor[idx*11, i, :]=embeddings[word_idx_map["<unk>"]]
+			else:
+				break
+		answers_tensor[idx*11, min(len(tokens), max_len_answer-1), :]=embeddings[word_idx_map["<eos>"]]
+		
+		# tokenization for each dialog
+		for num, dialog in enumerate(data[idx]['dialog']):
 
+			# tokenization for the question in dialog
+			tokens=nltk.word_tokenize(dialog['question'])
+			for i, token in enumerate(tokens):
+				# maximum tokens in answer/caption exceeded otherwise
+				if i<max_len_question-1:
+					if token in word_idx_map:
+						questions_tensor[idx*10+num, i, :]=embeddings[word_idx_map[token]]
+					else:
+						questions_tensor[idx*10+num, i, :]=embeddings[word_idx_map["<unk>"]]
+				else:
+					break
+			questions_tensor[idx*10+num, min(len(tokens), max_len_answer-1), :]=embeddings[word_idx_map["<eos>"]]
+
+
+			tokens=nltk.word_tokenize(dialog['answer'])
+			for i, token in enumerate(tokens):
+				# maximum tokens in answer/caption exceeded
+				if i<max_len_answer-1:
+					if token in word_idx_map:
+						answers_tensor[idx*11+num+1, i, :]=embeddings[word_idx_map[token]]
+					else:
+						answers_tensor[idx*11+num+1, i, :]=embeddings[word_idx_map["<unk>"]]
+				else:
+					break
+			answers_tensor[idx*11+num+1, min(len(tokens), max_len_answer-1), :]=embeddings[word_idx_map["<eos>"]]
+			
 	# gets image features using the coco_ids
 	image_features=get_vgg16_features(image_ids, path_to_data)
 
@@ -146,9 +192,15 @@ def preprocess(path_to_data,
 		print "Saving data for " + split + " split"
 		if split=='Train':
 			np.save(path_to_data+"Training/train_image_features.npy", image_features)
+			np.save(path_to_data+"Training/questions_tensor.npy", questions_tensor)
+			np.save(path_to_data+"Training/answers_tensor.npy", answers_tensor)
 		elif split=='Val':
 			np.save(path_to_data+"Validation/val_image_features.npy", image_features)
+			np.save(path_to_data+"Validation/questions_tensor.npy", questions_tensor)
+			np.save(path_to_data+"Validation/answers_tensor.npy", answers_tensor)
 		else:
 			np.save(path_to_data+"Test/test_image_features.npy", image_features)
+			np.save(path_to_data+"Test/questions_tensor.npy", questions_tensor)
+			np.save(path_to_data+"Test/answers_tensor.npy", answers_tensor)
 	else:
 		return image_features, questions_tensor, answers_tensor
