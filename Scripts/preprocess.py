@@ -126,9 +126,9 @@ def preprocess(path_to_data,
 
 		if save_embedding_matrix:
 			print "Saving Embedding Matrix"
-			save_obj(embeddings, path_to_data+"embedding_matrix.pkl")
+			np.save(path_to_data+"embedding_matrix.npy", embeddings)
 	else:
-		embeddings=load_obj(path_to_data+"embedding_matrix.pkl")
+		embeddings=np.load(path_to_data+"embedding_matrix.npy")
 
 	# all images have 10 question-answer pairs in sequence
 	image_ids=np.zeros((len(data),))
@@ -145,10 +145,10 @@ def preprocess(path_to_data,
 	if save_data:
 		print "Saving data for " + split + " split"
 		if split=='Train':
-			save_obj(image_features ,path_to_data+"Training/train_image_features.pkl")
+			np.save(path_to_data+"Training/train_image_features.npy", image_features)
 		elif split=='Val':
-			save_obj(image_features ,path_to_data+"Validation/val_image_features.pkl")
+			np.save(path_to_data+"Validation/val_image_features.npy", image_features)
 		else:
-			save_obj(image_features ,path_to_data+"Test/test_image_features.pkl")
+			np.save(path_to_data+"Test/test_image_features.npy", image_features)
 	else:
 		return image_features, questions_tensor, answers_tensor
