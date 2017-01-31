@@ -7,15 +7,15 @@ import json
 
 import numpy as np
 import nltk
-from utils import get_vgg16_features, get_embeddings
+from utils import get_vgg16_features, get_embeddings, save_obj, load_obj
 
 # requires the path of json file for training
 def preprocess(path_to_data, 
 	load_dict=False, 
-	save_dictionaries=False, 
+	save_dictionaries=True, 
 	load_embedding_matrix=False, 
-	save_embedding_matrix=False, 
-	save_image_features=False
+	save_embedding_matrix=True, 
+	save_data=True, 
 	split='Train'):
 	
 	'''
@@ -23,6 +23,7 @@ def preprocess(path_to_data,
 	load_*: load previously created dictionaries/embeddings. Automatically disbles save_*. Should be True for Validation/Testing.
 	save_*: Save the embeddings/dictionaries created
 	split: the data which is being processed. Can be 'Train', 'Val', 'Test'
+	
 	Example: '../../Data/'
 	'''
 
@@ -43,6 +44,9 @@ def preprocess(path_to_data,
 	
 	print "Preprocessing the dataset"
 	
+	max_len_question=56
+	max_len_answer=56
+
 	# create a dictionary if not already available
 	# to be used with only training data
 	if not load_dict:
@@ -51,6 +55,10 @@ def preprocess(path_to_data,
 		word_idx_map={}
 		idx_word_map=[]
 
+		# token count in questions and answers for respective tensors
+		ntokens_question=0
+		ntokens_answer=0
+		
 		# adding the standard tokens
 		# end of sentence tokens
 		word_idx_map["<eos>"]=0
@@ -68,8 +76,14 @@ def preprocess(path_to_data,
 				else:
 					word_freq[token]+=1
 			for dialog in data[idx]['dialog']:
+				
 				tokens_ques=nltk.word_tokenize(dialog['question'])
 				tokens_ans=nltk.word_tokenize(dialog['answer'])
+				if len(tokens_ans) > ntokens_answer:
+					ntokens_answer=len(tokens_ans)
+				if len(tokens_ques) > ntokens_question:
+					ntokens_question=len(tokens_ques)
+				
 				for token in tokens_ques+tokens_ans:
 					if token not in word_freq:
 						word_freq[token]=1
@@ -81,19 +95,25 @@ def preprocess(path_to_data,
 			if word_freq[token]>=5:
 				word_idx_map[token]=len(word_idx_map)
 				idx_word_map.append(token)
+		
+		max_len_question=ntokens_question+1
+		max_len_answer=ntokens_answer+1
 
 		print "Dictionaries made!"
 		print "Vocabulary size: " + str(len(word_idx_map))
+		print "Maximum number of tokens in a question: " + str(max_len_question)
+		print "Maximum number of tokens in an answer: " + str(max_len_answer)
 
 		if save_dictionaries:
 			print "Saving Dictionaries"
-			np.save(path_to_data+"dictionary.npy", word_idx_map)
-			np.save(path_to_data+"reverse_dictionary.npy", idx_word_map)
+			save_obj(word_idx_map, path_to_data+"dictionary.pkl")
+			save_obj(idx_word_map, path_to_data+"reverse_dictionary.pkl")
 
 	# load previously saved dictionary
 	else:
-		word_idx_map=np.load(path_to_data+"dictionary.npy")
-		idx_word_map=np.load(path_to_data+"reverse_dictionary.npy")
+		print "Loading dictionaries"
+		word_idx_map=load_obj(path_to_data+"dictionary.pkl")
+		idx_word_map=load_obj(path_to_data+"reverse_dictionary.pkl")
 
 	# creates embedding matrix
 	if not load_embedding_matrix:
@@ -102,16 +122,18 @@ def preprocess(path_to_data,
 
 		# Since, the embeddings are pre-trained, both <eos> and <unk> map onto origin
 		# To differentiate, the embedding for <eos> are set to random value
-		embeddings[0]=np.random.rand(1,embeddings.shape(1))
+		embeddings[0]=np.random.rand(1,embeddings.shape[1])
 
 		if save_embedding_matrix:
 			print "Saving Embedding Matrix"
-			np.save(path_to_data+"embedding_matrix.npy", embeddings)
+			save_obj(embeddings, path_to_data+"embedding_matrix.pkl")
 	else:
-		embeddings=np.load(path_to_data+"embedding_matrix.npy")
+		embeddings=load_obj(path_to_data+"embedding_matrix.pkl")
 
 	# all images have 10 question-answer pairs in sequence
-	image_ids=np.zeros((len(data,)))
+	image_ids=np.zeros((len(data),))
+	questions_tensor=np.zeros((len(data)*10,max_len_question, embeddings.shape[1]))
+	answers_tensor=np.zeros((len(data)*10, max_len_answer, embeddings.shape[1]))
 
 	for idx in range(len(data)):
 		image_ids[idx]=int(data[idx]['image_id'])
@@ -120,8 +142,13 @@ def preprocess(path_to_data,
 	# gets image features using the coco_ids
 	image_features=get_vgg16_features(image_ids, path_to_data)
 
-	if save_image_features:
-		print "Saving image features for training set"
-		np.save(path_to_data+"Training/train_image.npy",image_features)
-
-	return image_features, embeddings
+	if save_data:
+		print "Saving data for " + split + " split"
+		if split=='Train':
+			save_obj(image_features ,path_to_data+"Training/train_image_features.pkl")
+		elif split=='Val':
+			save_obj(image_features ,path_to_data+"Validation/val_image_features.pkl")
+		else:
+			save_obj(image_features ,path_to_data+"Test/test_image_features.pkl")
+	else:
+		return image_features, questions_tensor, answers_tensor
