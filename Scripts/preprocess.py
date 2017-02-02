@@ -1,6 +1,5 @@
 # preprocesses data to provide trainable data
 # refer to http://visualdialog.org/data
-# not the most optimized files, lot of code in rudimentary python
 # this file preprocesses the data to be setup for generative lstms
 import sys
 sys.path.append("../")
@@ -26,6 +25,7 @@ def preprocess(path_to_data,
 	split: the data which is being processed. Can be 'Train', 'Val', 'Test'
 	
 	Example: '../../Data/'
+	Note: Saving and reading in data can be terribly slow. Rerunning this script is easier.
 	'''
 
 	print "Loading JSON data file from split: " + str(split)
@@ -131,11 +131,18 @@ def preprocess(path_to_data,
 	else:
 		embeddings=np.load(path_to_data+"embedding_matrix.npy")
 
+	print "Constructing data for " + str(split) + " split"
 	# all images have 10 question-answer pairs in sequence
 	image_ids=np.zeros((len(data),))
-	questions_tensor=np.zeros((len(data)*10,max_len_question, embeddings.shape[1]))
+	
+	# saves questions and answers in a tensor 
+	# questions_tensor=np.zeros((len(data)*10,max_len_question, embeddings.shape[1]))
 	# caption is kept as the first answer
-	answers_tensor=np.zeros((len(data)*11, max_len_answer, embeddings.shape[1]))
+	# answers_tensor=np.zeros((len(data)*11, max_len_answer, embeddings.shape[1]))
+
+	# lists the answers and questions matrices
+	answers_tensor=[]
+	questions_tensor=[]
 
 	# add eos symbol always
 	# check for unknown symbols
@@ -145,49 +152,50 @@ def preprocess(path_to_data,
 
 		# tokenization of caption
 		tokens=nltk.word_tokenize(data[idx]['caption'])
+		sentence_matrix=np.zeros((len(tokens)+1, embeddings.shape[1]))
+
 		for i, token in enumerate(tokens):
-			# maximum tokens in answer/caption exceeded
-			if i<max_len_answer-1:
-				if token in word_idx_map:
-					answers_tensor[idx*11, i, :]=embeddings[word_idx_map[token]]
-				else:
-					answers_tensor[idx*11, i, :]=embeddings[word_idx_map["<unk>"]]
+			if token in word_idx_map:
+				sentence_matrix[i,:]=embeddings[word_idx_map[token]]
 			else:
-				break
-		answers_tensor[idx*11, min(len(tokens), max_len_answer-1), :]=embeddings[word_idx_map["<eos>"]]
-		
+				sentence_matrix[i,:]=embeddings[word_idx_map["<unk>"]]
+			
+		sentence_matrix[len(tokens),:]=embeddings[word_idx_map["<eos>"]]
+		answers_tensor.append(sentence_matrix)
+
 		# tokenization for each dialog
 		for num, dialog in enumerate(data[idx]['dialog']):
 
 			# tokenization for the question in dialog
 			tokens=nltk.word_tokenize(dialog['question'])
-			for i, token in enumerate(tokens):
-				# maximum tokens in answer/caption exceeded otherwise
-				if i<max_len_question-1:
-					if token in word_idx_map:
-						questions_tensor[idx*10+num, i, :]=embeddings[word_idx_map[token]]
-					else:
-						questions_tensor[idx*10+num, i, :]=embeddings[word_idx_map["<unk>"]]
-				else:
-					break
-			questions_tensor[idx*10+num, min(len(tokens), max_len_answer-1), :]=embeddings[word_idx_map["<eos>"]]
+			sentence_matrix=np.zeros((len(tokens)+1, embeddings.shape[1]))
 
+			for i, token in enumerate(tokens):
+				if token in word_idx_map:
+					sentence_matrix[i,:]=embeddings[word_idx_map[token]]
+				else:
+					sentence_matrix[i,:]=embeddings[word_idx_map["<unk>"]]
+
+			sentence_matrix[len(tokens),:]=embeddings[word_idx_map["<eos>"]]
+			questions_tensor.append(sentence_matrix)
 
 			tokens=nltk.word_tokenize(dialog['answer'])
+			sentence_matrix=np.zeros((len(tokens)+1, embeddings.shape[1]))
+
 			for i, token in enumerate(tokens):
-				# maximum tokens in answer/caption exceeded
-				if i<max_len_answer-1:
-					if token in word_idx_map:
-						answers_tensor[idx*11+num+1, i, :]=embeddings[word_idx_map[token]]
-					else:
-						answers_tensor[idx*11+num+1, i, :]=embeddings[word_idx_map["<unk>"]]
+				if token in word_idx_map:
+					sentence_matrix[i,:]=embeddings[word_idx_map[token]]
 				else:
-					break
-			answers_tensor[idx*11+num+1, min(len(tokens), max_len_answer-1), :]=embeddings[word_idx_map["<eos>"]]
+					sentence_matrix[i,:]=embeddings[word_idx_map["<unk>"]]
+			
+			sentence_matrix[len(tokens),:]=embeddings[word_idx_map["<eos>"]]
+			answers_tensor.append(sentence_matrix)
 			
 	# gets image features using the coco_ids
 	image_features=get_vgg16_features(image_ids, path_to_data)
-
+	questions_tensor=np.asarray(questions_tensor)
+	answers_tensor=np.asarray(answers_tensor)
+	
 	if save_data:
 		print "Saving data for " + split + " split"
 		if split=='Train':
