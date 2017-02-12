@@ -9,7 +9,7 @@ import numpy as np
 import nltk
 from utils import get_vgg16_features, get_embeddings, save_obj, load_obj
 
-# requires the path of json file for training
+# requires the path of json file
 def preprocess(path_to_data, 
 	load_dict=False, 
 	save_dictionaries=True, 
@@ -19,7 +19,7 @@ def preprocess(path_to_data,
 	split='Train'):
 	
 	'''
-	path_to_data: Path from function call to the Data folder
+	path_to_data: path from function call to the Data folder
 	load_*: load previously created dictionaries/embeddings. Automatically disbles save_*. Should be True for Validation/Testing.
 	save_*: Save the embeddings/dictionaries created
 	split: the data which is being processed. Can be 'Train', 'Val', 'Test'
