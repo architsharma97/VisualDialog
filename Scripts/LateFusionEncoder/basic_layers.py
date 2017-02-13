@@ -7,6 +7,7 @@ import sys
 sys.path.append('../')
 
 import numpy as np
+import theano
 import theano.tensor as T
 
 from utils import init_weights, _concat
@@ -20,11 +21,11 @@ def param_init_fflayer(params, prefix, nin, nout):
 
 	return params
 
-def fflayer(params, state_below, prefix):
+def fflayer(tparams, state_below, prefix):
 	'''
 	A feedforward layer with tanh nonlinearity
 	'''
-	return T.tanh(T.dot(state_below, params[_concat(prefix, 'W')])+params[_concat(prefix, 'b')])
+	return T.tanh(T.dot(state_below, tparams[_concat(prefix, 'W')])+tparams[_concat(prefix, 'b')])
 
 def param_init_lstm(params, prefix, nin, units):
 	'''
@@ -48,3 +49,67 @@ def param_init_lstm(params, prefix, nin, units):
 	params[_concat(prefix, 'b')] = np.zeros((4*units,)).astype('float32')
 	
 	return params
+
+def lstm_layer(tparams, state_below, 
+			   prefix, 
+			   init_state=None, 
+			   init_memory=None, 
+			   n_steps=None):
+	'''
+	Defines the forward pass of a LSTM for a sequence of questions/history (after passing through the embedding)
+	state_below: timesteps x samples x embedding_size
+	'''
+	if n_steps is None:
+		n_steps=state_below.shape[0]
+
+	if state_below.ndim == 3:
+		n_samples = state_below.shape[1]
+	else:
+		n_samples=1
+
+	dim=tparams[_concat(prefix,'U')].shape[0]
+
+	if init_state is None:
+		init_state = T.alloc(0., n_samples, dim)
+
+	if init_memory is None:
+		init_memory = T.alloc(0., n_samples, dim)
+
+	U = tparams[_concat(prefix, 'U')]
+	b = tparams[_concat(prefix, 'b')]
+	W = tparams[_concat(prefix, 'W')]
+	non_seq=[U, b, W]
+
+	def _slice(_x, n, dim):
+		if _x.ndim == 3:
+			return _x[:, :, n*dim:(n+1)*dim]
+		return _x[:, n*dim:(n+1)*dim]
+
+	def _step(sbelow, sbefore, cell_before):
+		preact = T.dot(sbefore, U)
+		preact += sbelow
+		preact += b
+
+		i = T.nnet.sigmoid(_slice(preact, 0, dim))
+		f = T.nnet.sigmoid(_slice(preact, 1, dim))
+		o = T.nnet.sigmoid(_slice(preact, 2, dim))
+		c = T.nnet.sigmoid(_slice(preact, 3, dim))
+
+		c = f * cell_before + i * c
+		h = o * T.tanh(c)
+
+		return h, c
+
+	lstm_state_below = T.dot(state_below, W) + b
+	if state_below.ndim == 3:
+		lstm_state_below = lstm_state_below.reshape((state_below.shape[0], state_below[1], -1))
+
+	outs, updates = theano.scan(_step, 
+								sequences=[lstm_state_below],
+								outputs_info=[init_state, init_memory],
+								name=_concat(prefix, 'layers')
+								non_sequences=non_seqs,
+								strict=True
+								n_steps=n_steps)
+
+	return outs

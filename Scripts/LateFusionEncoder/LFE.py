@@ -62,4 +62,4 @@ tparams=OrderedDict()
 for key, val in params.iteritems():
 	tparams[key]=theano.shared(params[key], name=key)
 
-# Construction of theano computation graph using symbolic variables
+# construction of theano computation graph using symbolic variables
