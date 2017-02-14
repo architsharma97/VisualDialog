@@ -17,11 +17,11 @@ def init_weights(nin, nout, type_init='uni', scale=0.1):
 	type_init={'uni' : uniform initialization between [-scale,scale],
 		  'ortho': orthogonal weight initialization, initializes uniformly if nin!=nout }
 	'''
-	if nin==nout and type_init='ortho':
-		W=np.random.randn(nin, nin)
-		W,s,v=np.linalg.svd(W)
+	if nin == nout and type_init == 'ortho':
+		W = np.random.randn(nin, nin)
+		W, s, v = np.linalg.svd(W)
 	else:
-		W=np.random.uniform(low=-scale, high=-scale, size=(nin, nout))
+		W = np.random.uniform(low=-scale, high=-scale, size=(nin, nout))
 
 	return W.astype('float32')
 
