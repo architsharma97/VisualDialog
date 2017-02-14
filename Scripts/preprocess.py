@@ -7,7 +7,9 @@ import json
 
 import numpy as np
 import nltk
-from utils import get_vgg16_features, get_embeddings, save_obj, load_obj
+
+from preprocess_utils import get_vgg16_features, get_embeddings
+from utils import save_obj, load_obj
 
 # requires the path of json file
 def preprocess(path_to_data, 
