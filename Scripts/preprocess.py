@@ -111,19 +111,19 @@ def preprocess(path_to_data,
 
 		if save_dictionaries:
 			print "Saving Dictionaries"
-			save_obj(word_idx_map, path_to_data + "dictionary.pkl")
-			save_obj(idx_word_map, path_to_data + "reverse_dictionary.pkl")
+			save_obj(word_idx_map, path_to_data + "../Models/dictionary.pkl")
+			save_obj(idx_word_map, path_to_data + "../Models/reverse_dictionary.pkl")
 
 	# load previously saved dictionary
 	else:
 		print "Loading dictionaries"
-		word_idx_map = load_obj(path_to_data + "dictionary.pkl")
-		idx_word_map = load_obj(path_to_data + "reverse_dictionary.pkl")
+		word_idx_map = load_obj(path_to_data + "../Models/dictionary.pkl")
+		idx_word_map = load_obj(path_to_data + "../Models/reverse_dictionary.pkl")
 
 	# creates embedding matrix
 	if not load_embedding_matrix:
 		# embeddings
-		embeddings = get_embeddings(word_idx_map, path_to_data+"Embeddings/glove.6B.300d.txt")
+		embeddings = get_embeddings(word_idx_map, path_to_data + "Embeddings/glove.6B.300d.txt")
 
 		# Since, the embeddings are pre-trained, both <eos> and <unk> map onto origin
 		
@@ -135,9 +135,9 @@ def preprocess(path_to_data,
 		
 		if save_embedding_matrix:
 			print "Saving Embedding Matrix"
-			np.save(path_to_data + "embedding_matrix.npy", embeddings)
+			np.save(path_to_data + "../Models/embedding_matrix.npy", embeddings)
 	else:
-		embeddings = np.load(path_to_data + "embedding_matrix.npy")
+		embeddings = np.load(path_to_data + "../Models/embedding_matrix.npy")
 
 	print "Constructing data for " + str(split) + " split"
 	
