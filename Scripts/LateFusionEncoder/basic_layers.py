@@ -53,7 +53,8 @@ def param_init_lstm(params, prefix, nin, units):
 def lstm_layer(tparams, state_below, 
 			   prefix, 
 			   init_state=None, 
-			   init_memory=None, 
+			   init_memory=None,
+			   one_step=False, 
 			   n_steps=None):
 	'''
 	Defines the forward pass of a LSTM for a sequence of questions/history (after passing through the embedding)
@@ -104,6 +105,10 @@ def lstm_layer(tparams, state_below,
 	if state_below.ndim == 3:
 		lstm_state_below = lstm_state_below.reshape((state_below.shape[0], state_below[1], -1))
 
+	if one_step:
+		# mainly for decoder
+		h, c = _step(lstm_state_below, init_state, init_memory)
+		return [h, c]
 	outs, updates = theano.scan(_step, 
 								sequences=[lstm_state_below],
 								outputs_info=[init_state, init_memory],

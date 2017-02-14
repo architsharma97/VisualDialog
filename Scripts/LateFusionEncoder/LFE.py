@@ -35,6 +35,7 @@ ff_prefix = 'ff'
 LSTM_D = FF_OUT
 LSTM_D_LAYERS = 2
 lstm_prefix_d = 'lstm_d'
+MAX_TOKENS = 60
 
 # load the embeddings
 embeddings = T.shared(np.transpose(np.load(DATA_DIR + 'embedding_matrix.npy').astype('float32')))
@@ -135,37 +136,12 @@ def build_decoder(tparams, lfcode):
 	
 	global (DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, 
 		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, embeddings,
-		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix)
+		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix, MAX_TOKENS)
 
-	# timesteps x number of samples x dim
-	ans = T.dtensor3('ans', dtype='float32')
-
-	# 
-	asteps = a.shape[0]-1
-
-	# initial state set to late fusion encoder's output
-	out_6 = lstm_layer(tparams, ans, _concat(lstm_prefix_d, 1), init_state=lfcode, n_steps=asteps)
-
-	# restructuring the output from previous layer
-	in_7 = T.zeros((asteps, ans.shape[1], out_6[0][0].shape[1]), dtype='float32')
-	for i in range(len(out_6)):
-		in_7[i,:,:] = out_6[i][0]
-
-	# initial state set to zero, can be changed to late fusion encoder's o/p
-	out_7 = lstm_layer(tparams, in_7, _concat(lstm_prefix_d, 2), n_steps=asteps)
-	
-	# computes softmax and arranges the output in timesteps x samples x softmax over dictionary
-	out = T.zeros((asteps, out_7[0][0].shape[0], embeddings.shape[1]), dtype='float32')
-	for i in range(asteps):
-		out[i,:,:] = T.nnet.softmax(T.dot(out_7[i][0], embeddings))
-
-	return ans, out
 
 # preprocess the training data to get input matrices and tensors
 image_features, questions_tensor, answers_tensor, answers_matrix = preprocess(DATA_DIR, load_dict=True, load_embedding_data=True, save_data=False)
 tparams = initialize()
 img, que, his, lfcode = build_lfe(tparams)
-ans, out = build_decoder(tparams, lfcode)
 
 # cost function
-
