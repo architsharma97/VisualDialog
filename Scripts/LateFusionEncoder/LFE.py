@@ -140,11 +140,13 @@ def build_decoder(tparams, lfcode):
 	# timesteps x number of samples x dim
 	ans = T.dtensor3('ans', dtype='float32')
 
-	asteps = a.shape[0]
+	# 
+	asteps = a.shape[0]-1
+
 	# initial state set to late fusion encoder's output
 	out_6 = lstm_layer(tparams, ans, _concat(lstm_prefix_d, 1), init_state=lfcode, n_steps=asteps)
 
-	# resturctuing the output from previous layer
+	# restructuring the output from previous layer
 	in_7 = T.zeros((asteps, ans.shape[1], out_6[0][0].shape[1]), dtype='float32')
 	for i in range(len(out_6)):
 		in_7[i,:,:] = out_6[i][0]
@@ -160,7 +162,10 @@ def build_decoder(tparams, lfcode):
 	return ans, out
 
 # preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tensor = preprocess(DATA_DIR, load_dict=True, load_embedding_data=True, save_data=False)
+image_features, questions_tensor, answers_tensor, answers_matrix = preprocess(DATA_DIR, load_dict=True, load_embedding_data=True, save_data=False)
 tparams = initialize()
 img, que, his, lfcode = build_lfe(tparams)
 ans, out = build_decoder(tparams, lfcode)
+
+# cost function
+
