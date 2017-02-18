@@ -63,10 +63,11 @@ except:
 	load_dict = False
 
 # preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False)
+image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False)
 
 print 'Shape of image features: ', image_features.shape
 print 'Shape of questions_tensor: ', questions_tensor.shape
+print 'Shape of answers_tensor: ', answers_tensor.shape
 print 'Shape of answers_tokens_idx: ', answers_tokens_idx.shape
 
 if not load_embedding_data:
