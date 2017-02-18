@@ -1,7 +1,7 @@
 import numpy as np
 
 class data():
-	def __init__(self, img, que, ans, batch_size=128, maxlen=50):
+	def __init__(self, img, que, ans, batch_size=128):
 		self.img = img
 		self.que = que
 		self.ans = ans
