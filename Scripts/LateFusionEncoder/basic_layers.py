@@ -115,6 +115,6 @@ def lstm_layer(tparams, state_below,
 								name=_concat(prefix, 'layers')
 								non_sequences=non_seqs,
 								strict=True
-								n_steps=n_steps)
+								n_steps=max_steps)
 
 	return outs

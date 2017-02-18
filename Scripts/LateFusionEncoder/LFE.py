@@ -129,19 +129,56 @@ def build_lfe(tparams):
 
 	return img, que, his, lfcode
 
-def build_decoder(tparams, lfcode):
+def build_decoder(tparams, lfcode, max_steps):
 	'''
 	Builds computational graph for generative decoder
 	'''
 	
 	global (DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, 
 		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, embeddings,
-		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix, MAX_TOKENS)
+		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix, MAX_TOKENS, word_idx_map)
 
+	def _decode_step(sbelow, sbefore_1, sbefore_2, cell_before_1, cell_before_2):
+		'''
+		Custom step for decoder, where the output of 2nd LSTM layer is fed into the 1st LSTM layer
+		'''
+		out_1 = lstm_layer(tparams, sbelow, _concat(lstm_prefix_d, 1), init_state=sbefore_1, init_memory=cell_before_1, one_step=True)
+
+		out_2 = lstm_layer(tparams, out_1[0][0], _concat(lstm_prefix_d, 1), init_state=sbefore_2, init_memory=cell_before_2, one_step=True)
+
+		return out_2[0][0], out_1[0][0], out_2[0][0], out_1[0][1], out_2[0][1]
+
+	def softmax(inp):
+		'''
+		Chooses the right element from the outputs for softmax
+		'''
+		return T.nnet.softmax(T.dot(inp, embeddings))
+
+	n_samples = lfcode.shape[0]
+	hdim = lfcode.shape[1]
+
+	memory_1 = T.as_tensor_variable(np.zeros((n_samples, hdim)), dtype='float32')
+	memory_2 = T.as_tensor_variable(np.zeros((n_samples, hdim)), dtype='float32')
+
+	dim = embeddings.shape[1]
+
+	init_token = T.as_tensor_variable(np.tile(embeddings[word_idx_map['<sos>']], (n_samples, 1)))
+
+	# initial hidden state for both 1st and 2nd layer is lfcode
+	tokens, updates = theano.scan(_decode_step,
+									output_info=[init_token, lfcode, lfcode, memory_1, memory_2],
+									strict=True,
+									n_steps=max_steps)
+
+	soft_tokens, updates = theano.scan(softmax, sequences=tokens)
+
+	return soft_tokens
 
 # preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tensor, answers_matrix = preprocess(DATA_DIR, load_dict=True, load_embedding_data=True, save_data=False)
+image_features, questions_tensor, answers_matrix = preprocess(DATA_DIR, load_dict=True, load_embedding_data=True, save_data=False)
+
 tparams = initialize()
 img, que, his, lfcode = build_lfe(tparams)
+ans = build_decoder(tparams, lfcode, MAX_TOKENS)
 
 # cost function
