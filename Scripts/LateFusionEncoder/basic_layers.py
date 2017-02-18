@@ -112,9 +112,9 @@ def lstm_layer(tparams, state_below,
 	outs, updates = theano.scan(_step, 
 								sequences=[lstm_state_below],
 								outputs_info=[init_state, init_memory],
-								name=_concat(prefix, 'layers')
-								non_sequences=non_seqs,
-								strict=True
-								n_steps=max_steps)
+								name=_concat(prefix, 'layers'),
+								non_sequences=non_seq,
+								strict=True,
+								n_steps=n_steps)
 
 	return outs
