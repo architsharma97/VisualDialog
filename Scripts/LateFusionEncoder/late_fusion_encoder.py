@@ -82,7 +82,7 @@ if not load_dict:
 EMBEDDINGS_DIM = embeddings.shape[0]
 
 print "Testing minibatches"
-Data = minibatch.data(image_features, questions_tensor, answers_tokens_idx)
+Data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx)
 
 def initialize():
 	'''
