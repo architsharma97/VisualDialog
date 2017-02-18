@@ -45,7 +45,7 @@ GRAD_CLIP = 5.0
 
 print "Loading embedding matrix"
 try:
-	embeddings = T.as_tensor_variable(np.transpose(np.load(DATA_DIR + 'embedding_matrix.npy').astype('float32')))
+	embeddings = T.as_tensor_variable(np.transpose(np.load(MODEL_DIR + 'embedding_matrix.npy').astype('float32')))
 	load_embedding_data = True
 except:
 	print "Unable to load embedding matrix\nWill be created after preprocessing"
@@ -54,8 +54,8 @@ except:
 print "Loading dictionaries"
 try:
 	# loading dictionaries
-	word_idx_map = load_obj(DATA_DIR + 'dictionary.pkl')
-	idx_word_map = load_obj(DATA_DIR + 'reverse_dictionary.pkl')
+	word_idx_map = load_obj(MODEL_DIR + 'dictionary.pkl')
+	idx_word_map = load_obj(MODEL_DIR + 'reverse_dictionary.pkl')
 	load_dict = True
 except:
 	print "Unable to load dictionaries\nWill be loaded after preprocessing"
