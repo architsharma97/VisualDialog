@@ -13,8 +13,10 @@ from adam import adam
 
 from collections import OrderedDict
 
+print "Initializing constants"
 # constants
 DATA_DIR = '../../Data/'
+MODEL_DIR = '../../Models/'
 
 # VGG16 Specification
 IMAGE_DIM = 4096
@@ -42,13 +44,37 @@ MAX_TOKENS = 60
 # maximum gradient allowed in a step
 GRAD_CLIP = 5.0
 
-# load the embeddings
-embeddings = T.as_tensor_variable(np.transpose(np.load(DATA_DIR + 'embedding_matrix.npy').astype('float32')))
-EMBEDDINGS_DIM = embeddings.shape[0]
+print "Loading embedding matrix"
+try:
+	embeddings = T.as_tensor_variable(np.transpose(np.load(DATA_DIR + 'embedding_matrix.npy').astype('float32')))
+	load_embedding_data = True
+except:
+	print "Unable to load embedding matrix\nWill be created after preprocessing"
+	load_embedding_data = False
 
-# loading dictionaries
-word_idx_map = load_obj(DATA_DIR + 'dictionary.pkl')
-idx_word_map = load_obj(DATA_DIR + 'reverse_dictionary.pkl')
+print "Loading dictionaries"
+try:
+	# loading dictionaries
+	word_idx_map = load_obj(DATA_DIR + 'dictionary.pkl')
+	idx_word_map = load_obj(DATA_DIR + 'reverse_dictionary.pkl')
+	load_dict = True
+except:
+	print "Unable to load dictionaries\nWill be loaded after preprocessing"
+	load_dict = False
+
+# preprocess the training data to get input matrices and tensors
+image_features, questions_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_data=load_embedding_data, save_data=False)
+
+if not load_embedding_data:
+	print "Loading embedding matrix"
+	embeddings = T.as_tensor_variable(np.transpose(np.load(DATA_DIR + 'embedding_matrix.npy').astype('float32')))
+
+if not load_dict:
+	print "Loading dictionaries"
+	word_idx_map = load_obj(DATA_DIR + 'dictionary.pkl')
+	idx_word_map = load_obj(DATA_DIR + 'reverse_dictionary.pkl')
+
+EMBEDDINGS_DIM = embeddings.shape[0]
 
 def initialize():
 	'''
@@ -175,25 +201,28 @@ def build_decoder(tparams, lfcode, max_steps):
 
 	return T.as_tensor_variable(soft_tokens)
 
-# preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=True, load_embedding_data=True, save_data=False)
-
+print "Initializating parameters for model"
 tparams = initialize()
 
+print "Building encoder for the model"
 img, que, his, lfcode = build_lfe(tparams)
 
 # answer tensor should be a binary tensor with 1's at the positions which needs to be included
 # timesteps x number of answers in minibatch x vocabulary size 
 ans = T.tensor3('ans', dtype='float32')
 
+print "Building decoder"
 pred = build_decoder(tparams, lfcode, MAX_TOKENS)
 
 # cost function
 cost = -T.log(pred*ans).sum()
 inps = [img, que, his, pred]
 
+print "Constructing graph"
 f_cost = theano.function(inps, cost, profile=False)
+print "Done!"
 
+print "Computing gradients"
 param_list=[val for key, val in tparams.iteritems()]
 grads = T.grad(cost, wrt=param_list)
 
@@ -215,4 +244,5 @@ grads = new_grads
 lr = T.scale(name='lr', dtype='float32')
 
 # gradients, update parameters
+print "Setting up optimizer"
 f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
