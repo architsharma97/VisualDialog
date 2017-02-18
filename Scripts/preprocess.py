@@ -241,5 +241,4 @@ def preprocess(path_to_data,
 			np.save(path_to_data + "Test/answers_tensor.npy", answers_tensor)
 			np.save(path_to_data + "Test/answers_matrix.npy", answers_matrix)
 	else:
-		# removed return of answers tensor
-		return image_features, questions_tensor, answers_matrix
+		return image_features, questions_tensor, answers_tensor, answers_matrix
