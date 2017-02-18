@@ -9,6 +9,7 @@ from utils import init_weights, _concat, load_obj
 from preprocess import preprocess
 from basic_layers import param_init_fflayer, param_init_lstm, fflayer, lstm_layer
 from adam import adam
+import minibatch
 
 from collections import OrderedDict
 
@@ -74,6 +75,9 @@ if not load_dict:
 	idx_word_map = load_obj(MODEL_DIR + 'reverse_dictionary.pkl')
 
 EMBEDDINGS_DIM = embeddings.shape[0]
+
+print "Testing minibatches"
+Data = minibatch.data(image_features, questions_tensor, answers_tokens_idx)
 
 def initialize():
 	'''
