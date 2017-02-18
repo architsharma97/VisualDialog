@@ -1,4 +1,3 @@
-ADD print statments otherwise this script will not run
 import sys
 sys.path.append('../')
 
