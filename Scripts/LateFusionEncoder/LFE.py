@@ -4,10 +4,12 @@ sys.path.append('../')
 
 import numpy as np
 import theano.tensor as T
+import theano
 
 from utils import init_weights, _concat, load_obj
 from preprocess import preprocess
 from basic_layers import param_init_fflayer, param_init_lstm, fflayer, lstm_layer
+from adam import adam
 
 from collections import OrderedDict
 
@@ -37,8 +39,11 @@ LSTM_D_LAYERS = 2
 lstm_prefix_d = 'lstm_d'
 MAX_TOKENS = 60
 
+# maximum gradient allowed in a step
+GRAD_CLIP = 5.0
+
 # load the embeddings
-embeddings = T.shared(np.transpose(np.load(DATA_DIR + 'embedding_matrix.npy').astype('float32')))
+embeddings = T.as_tensor_variable(np.transpose(np.load(DATA_DIR + 'embedding_matrix.npy').astype('float32')))
 EMBEDDINGS_DIM = embeddings.shape[0]
 
 # loading dictionaries
@@ -87,12 +92,12 @@ def build_lfe(tparams):
 		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, 
 		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix)
 
-	# vgg16 extracted features for images
 	# data preparation ensures that the number of images matches the number of questions
 	img = T.matrix('img', dtype='float32')
+	
 	# steps x samples x dimensions
-	que = T.dtensor3('que', dtype='float32')
-	his = T.dtensor3('his', dtype='float32')
+	que = T.tensor3('que', dtype='float32')
+	his = T.tensor3('his', dtype='float32')
 
 	qsteps = que.shape[0]
 	hsteps = his.shape[0]
@@ -101,7 +106,7 @@ def build_lfe(tparams):
 	out_1 = lstm_layer(tparams, que, _concat(lstm_prefix_q, 1), n_steps=qsteps)
 	
 	# restructure
-	in_2 = T.as_tensor_variable([array[0] for array in out_1], dtype='float32')
+	in_2 = T.as_tensor_variable([array[0] for array in out_1])
 
 	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_q, 2), n_steps=qsteps)
 
@@ -112,7 +117,7 @@ def build_lfe(tparams):
 	out_3 = lstm_layer(tparams, his, _concat(lstm_prefix_h, 1), n_steps=hsteps)
 	
 	# restructure
-	in_4 = T.as_tensor_variable([array[0] for array in out_3], dtype='float32')
+	in_4 = T.as_tensor_variable([array[0] for array in out_3])
 
 	out_4 = lstm_layer(tparams, in_4, _concat(lstm_prefix_h, 2), n_steps=hsteps)
 
@@ -148,13 +153,13 @@ def build_decoder(tparams, lfcode, max_steps):
 		'''
 		Chooses the right element from the outputs for softmax
 		'''
-		return T.nnet.softmax(T.dot(inp, embeddings))
+		return T.nnet.softmax(T.dot(inp[2], embeddings))
 
 	n_samples = lfcode.shape[0]
 	hdim = lfcode.shape[1]
 
-	memory_1 = T.as_tensor_variable(np.zeros((n_samples, hdim)), dtype='float32')
-	memory_2 = T.as_tensor_variable(np.zeros((n_samples, hdim)), dtype='float32')
+	memory_1 = T.as_tensor_variable(np.zeros((n_samples, hdim)).astype('float32'))
+	memory_2 = T.as_tensor_variable(np.zeros((n_samples, hdim)).astype('float32'))
 
 	dim = embeddings.shape[1]
 
@@ -168,13 +173,46 @@ def build_decoder(tparams, lfcode, max_steps):
 
 	soft_tokens, updates = theano.scan(softmax, sequences=tokens)
 
-	return soft_tokens
+	return T.as_tensor_variable(soft_tokens)
 
 # preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_matrix = preprocess(DATA_DIR, load_dict=True, load_embedding_data=True, save_data=False)
+image_features, questions_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=True, load_embedding_data=True, save_data=False)
 
 tparams = initialize()
+
 img, que, his, lfcode = build_lfe(tparams)
-ans = build_decoder(tparams, lfcode, MAX_TOKENS)
+
+# answer tensor should be a binary tensor with 1's at the positions which needs to be included
+# timesteps x number of answers in minibatch x vocabulary size 
+ans = T.tensor3('ans', dtype='float32')
+
+pred = build_decoder(tparams, lfcode, MAX_TOKENS)
 
 # cost function
+cost = -T.log(pred*ans).sum()
+inps = [img, que, his, pred]
+
+f_cost = theano.function(inps, cost, profile=False)
+
+param_list=[val for key, val in tparams.iteritems()]
+grads = T.grad(cost, wrt=param_list)
+
+# computinng norms
+f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
+f_weight_norm = theano.function([], [(v**2).sum() for k,v in tparams.iteritems()], profile=False)
+
+# gradient is clipped beyond certain values
+g2 = 0.
+for g in grads:
+	g2 += (g**2).sum()
+new_grads = []
+for g in grads:
+	new_grads.append(T.switch(g2 > (GRAD_CLIP**2),
+								g / T.sqrt(g2)*GRAD_CLIP, g))
+grads = new_grads
+
+# learning rate
+lr = T.scale(name='lr', dtype='float32')
+
+# gradients, update parameters
+f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
