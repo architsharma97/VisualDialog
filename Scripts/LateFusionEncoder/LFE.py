@@ -62,16 +62,16 @@ except:
 	load_dict = False
 
 # preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_data=load_embedding_data, save_data=False)
+image_features, questions_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False)
 
 if not load_embedding_data:
 	print "Loading embedding matrix"
-	embeddings = T.as_tensor_variable(np.transpose(np.load(DATA_DIR + 'embedding_matrix.npy').astype('float32')))
+	embeddings = T.as_tensor_variable(np.transpose(np.load(MODEL_DIR + 'embedding_matrix.npy').astype('float32')))
 
 if not load_dict:
 	print "Loading dictionaries"
-	word_idx_map = load_obj(DATA_DIR + 'dictionary.pkl')
-	idx_word_map = load_obj(DATA_DIR + 'reverse_dictionary.pkl')
+	word_idx_map = load_obj(MODEL_DIR + 'dictionary.pkl')
+	idx_word_map = load_obj(MODEL_DIR + 'reverse_dictionary.pkl')
 
 EMBEDDINGS_DIM = embeddings.shape[0]
 
@@ -81,9 +81,9 @@ def initialize():
 	'''
 	# Parameters for the model
 	params = OrderedDict()
-	global (DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, 
-		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, 
-		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix)
+	global DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, \
+		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, \
+		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix
 	
 	# feedforward layer
 	params = param_init_fflayer(params, ff_prefix, FF_IN, FF_OUT)
@@ -113,9 +113,9 @@ def build_lfe(tparams):
 	Builds the computational graph of the encoder
 	'''
 	
-	global (DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, 
-		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, 
-		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix)
+	global DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, \
+		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, \
+		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix
 
 	# data preparation ensures that the number of images matches the number of questions
 	img = T.matrix('img', dtype='float32')
@@ -160,9 +160,9 @@ def build_decoder(tparams, lfcode, max_steps):
 	Builds computational graph for generative decoder
 	'''
 	
-	global (DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, 
-		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, embeddings,
-		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix, MAX_TOKENS, word_idx_map)
+	global DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, \
+		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, embeddings, \
+		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix, MAX_TOKENS, word_idx_map
 
 	def _decode_step(sbelow, sbefore_1, sbefore_2, cell_before_1, cell_before_2):
 		'''
