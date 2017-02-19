@@ -36,7 +36,7 @@ FF_OUT = 512
 ff_prefix = 'ff'
 
 # decoder layers
-LSTM_D = FF_OUT
+LSTM_D_OUT = 512
 LSTM_D_LAYERS = 2
 lstm_prefix_d = 'lstm_d'
 MAX_TOKENS = 50
@@ -46,7 +46,8 @@ GRAD_CLIP = 5.0
 
 print "Loading embedding matrix"
 try:
-	embeddings = T.as_tensor_variable(np.transpose(np.load(MODEL_DIR + 'embedding_matrix.npy').astype('float32')))
+	embed = np.transpose(np.load(MODEL_DIR + 'embedding_matrix.npy').astype('float32'))
+	embeddings = T.as_tensor_variable(embed)
 	load_embedding_data = True
 except:
 	print "Unable to load embedding matrix\nWill be created after preprocessing"
@@ -63,26 +64,27 @@ except:
 	load_dict = False
 
 # preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False)
+# image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False)
 
-print 'Shape of image features: ', image_features.shape
-print 'Shape of questions_tensor: ', questions_tensor.shape
-print 'Shape of answers_tensor: ', answers_tensor.shape
-print 'Shape of answers_tokens_idx: ', answers_tokens_idx.shape
+# print 'Shape of image features: ', image_features.shape
+# print 'Shape of questions_tensor: ', questions_tensor.shape
+# print 'Shape of answers_tensor: ', answers_tensor.shape
+# print 'Shape of answers_tokens_idx: ', answers_tokens_idx.shape
 
 if not load_embedding_data:
 	print "Loading embedding matrix"
-	embeddings = T.as_tensor_variable(np.transpose(np.load(MODEL_DIR + 'embedding_matrix.npy').astype('float32')))
+	embed = np.transpose(np.load(MODEL_DIR + 'embedding_matrix.npy').astype('float32'))
+	embeddings = T.as_tensor_variable(embed)
 
 if not load_dict:
 	print "Loading dictionaries"
 	word_idx_map = load_obj(MODEL_DIR + 'dictionary.pkl')
 	idx_word_map = load_obj(MODEL_DIR + 'reverse_dictionary.pkl')
 
-EMBEDDINGS_DIM = embeddings.shape[0]
+EMBEDDINGS_DIM = embed.shape[0]
 
-print "Testing minibatches"
-Data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx)
+# print "Testing minibatches"
+# Data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx)
 
 def initialize():
 	'''
@@ -107,13 +109,14 @@ def initialize():
 	params = param_init_lstm(params, _concat(lstm_prefix_h, 2), LSTM_H_OUT, LSTM_H_OUT)
 
 	# decoding layers
-	params = param_init_lstm(params, _concat(lstm_prefix_d, 1), EMBEDDINGS_DIM, LSTM_D)
-	params = param_init_lstm(params, _concat(lstm_prefix_d, 2), LSTM_D, EMBEDDINGS_DIM)
+	params = param_init_lstm(params, _concat(lstm_prefix_d, 1), EMBEDDINGS_DIM, LSTM_D_OUT)
+	params = param_init_lstm(params, _concat(lstm_prefix_d, 2), LSTM_D_OUT, EMBEDDINGS_DIM)
 
 	# initialize theano shared variables for params
 	tparams = OrderedDict()
 	for key, val in params.iteritems():
-		tparams[key] = T.shared(params[key], name=key)
+		print key, ': ', val.shape
+		tparams[key] = theano.shared(val, name=key)
 
 	return tparams
 
@@ -177,35 +180,35 @@ def build_decoder(tparams, lfcode, max_steps):
 		'''
 		Custom step for decoder, where the output of 2nd LSTM layer is fed into the 1st LSTM layer
 		'''
-		out_1 = lstm_layer(tparams, sbelow, _concat(lstm_prefix_d, 1), init_state=sbefore_1, init_memory=cell_before_1, one_step=True)
+		h_1, c_1 = lstm_layer(tparams, sbelow, _concat(lstm_prefix_d, 1), init_state=sbefore_1, init_memory=cell_before_1, one_step=True)
 
-		out_2 = lstm_layer(tparams, out_1[0][0], _concat(lstm_prefix_d, 1), init_state=sbefore_2, init_memory=cell_before_2, one_step=True)
+		h_2, c_2 = lstm_layer(tparams, h_1, _concat(lstm_prefix_d, 2), init_state=sbefore_2, init_memory=cell_before_2, one_step=True)
 
-		return out_2[0][0], out_1[0][0], out_2[0][0], out_1[0][1], out_2[0][1]
-
-	def softmax(inp):
+		return h_2, h_1, h_2, c_1, c_2
+		
+	def _softmax(*inp):
 		'''
 		Chooses the right element from the outputs for softmax
 		'''
 		return T.nnet.softmax(T.dot(inp[2], embeddings))
 
 	n_samples = lfcode.shape[0]
-	hdim = lfcode.shape[1]
+	hdim1 = lfcode.shape[1]
+	hdim2 = embeddings.shape[0]
 
-	memory_1 = T.as_tensor_variable(np.zeros((n_samples, hdim)).astype('float32'))
-	memory_2 = T.as_tensor_variable(np.zeros((n_samples, hdim)).astype('float32'))
+	init_h1 = lfcode
+	init_h2 = T.alloc(0., n_samples, hdim2)
+	memory_1 = T.alloc(0., n_samples, hdim1)
+	memory_2 = T.alloc(0., n_samples, hdim2)
 
-	dim = embeddings.shape[1]
+	init_token = T.shape_padleft(T.extra_ops.repeat(embeddings.T[word_idx_map['<sos>'], :], n_samples, axis=0))
 
-	init_token = T.as_tensor_variable(np.tile(embeddings[word_idx_map['<sos>']], (n_samples, 1)))
-
-	# initial hidden state for both 1st and 2nd layer is lfcode
+	# initial hidden state for both 1st layer is lfcode
 	tokens, updates = theano.scan(_decode_step,
-									output_info=[init_token, lfcode, lfcode, memory_1, memory_2],
-									strict=True,
+									outputs_info=[T.unbroadcast(init_token, 0), init_h1, init_h2, memory_1, memory_2],
 									n_steps=max_steps)
 
-	soft_tokens, updates = theano.scan(softmax, sequences=tokens)
+	soft_tokens, updates = theano.scan(_softmax, sequences=tokens)
 
 	return T.as_tensor_variable(soft_tokens)
 
@@ -216,18 +219,20 @@ print "Building encoder for the model"
 img, que, his, lfcode = build_lfe(tparams)
 
 # answer tensor should be a binary tensor with 1's at the positions which needs to be included
-# timesteps x number of answers in minibatch x vocabulary size 
+# timesteps x number of answers in minibatch x vocabulary size
 ans = T.tensor3('ans', dtype='float32')
 
 print "Building decoder"
 pred = build_decoder(tparams, lfcode, MAX_TOKENS)
 
+print "Building cost function"
 # cost function
 cost = -T.log(pred*ans).sum()
-inps = [img, que, his, pred]
+
+inps = [img, que, his, ans]
 
 print "Constructing graph"
-f_cost = theano.function(inps, cost, profile=False)
+f_cost = theano.function(inps, cost, on_unused_input='ignore', profile=False)
 print "Done!"
 
 print "Computing gradients"
@@ -249,7 +254,7 @@ for g in grads:
 grads = new_grads
 
 # learning rate
-lr = T.scale(name='lr', dtype='float32')
+lr = T.scalar(name='lr', dtype='float32')
 
 # gradients, update parameters
 print "Setting up optimizer"
