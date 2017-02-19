@@ -79,6 +79,7 @@ def lstm_layer(tparams, state_below,
 	U = tparams[_concat(prefix, 'U')]
 	b = tparams[_concat(prefix, 'b')]
 	W = tparams[_concat(prefix, 'W')]
+	
 	non_seq = [U, b, W]
 
 	def _slice(_x, n, dim):
@@ -115,4 +116,5 @@ def lstm_layer(tparams, state_below,
 								non_sequences=non_seq,
 								strict=True,
 								n_steps=n_steps)
+	
 	return outs
