@@ -73,7 +73,7 @@ class data():
 				# removes sos token from the previous answer
 				prev_ans = self.ans[ans_idx][1: , :]
 				
-				prev = np.concatenate(prev_his, prev_que, prev_ans, axis=0)
+				prev = np.concatenate((prev_his, prev_que, prev_ans), axis=0)
 			
 			his.append(prev)
 			ans_idx += 1
