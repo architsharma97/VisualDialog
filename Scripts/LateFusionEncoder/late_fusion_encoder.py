@@ -64,12 +64,12 @@ except:
 	load_dict = False
 
 # preprocess the training data to get input matrices and tensors
-# image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False)
+image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False)
 
-# print 'Shape of image features: ', image_features.shape
-# print 'Shape of questions_tensor: ', questions_tensor.shape
-# print 'Shape of answers_tensor: ', answers_tensor.shape
-# print 'Shape of answers_tokens_idx: ', answers_tokens_idx.shape
+print 'Shape of image features: ', image_features.shape
+print 'Shape of questions_tensor: ', questions_tensor.shape
+print 'Shape of answers_tensor: ', answers_tensor.shape
+print 'Shape of answers_tokens_idx: ', answers_tokens_idx.shape
 
 if not load_embedding_data:
 	print "Loading embedding matrix"
@@ -83,8 +83,8 @@ if not load_dict:
 
 EMBEDDINGS_DIM = embed.shape[0]
 
-# print "Testing minibatches"
-# Data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx)
+print "Testing minibatches"
+Data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx)
 
 def initialize():
 	'''
@@ -239,7 +239,7 @@ print "Computing gradients"
 param_list=[val for key, val in tparams.iteritems()]
 grads = T.grad(cost, wrt=param_list)
 
-# computinng norms
+# computing norms
 f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
 f_weight_norm = theano.function([], [(v**2).sum() for k,v in tparams.iteritems()], profile=False)
 
