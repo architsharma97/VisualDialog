@@ -84,7 +84,13 @@ if not load_dict:
 EMBEDDINGS_DIM = embed.shape[0]
 
 print "Testing minibatches"
-Data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx)
+train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx)
+
+# get token counts
+train_data.get_counts()
+
+train_data.process_for_lfe()
+print 'Shape of history created: ', train_data.his.shape
 
 def initialize():
 	'''

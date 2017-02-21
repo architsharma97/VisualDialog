@@ -1,3 +1,4 @@
+# NOTE: Remove <sos> and <eos> token when constructing history
 import numpy as np
 
 class data():
@@ -7,16 +8,6 @@ class data():
 		self.ans = ans
 		self.ans_tokens = ans_tokens
 		self.batch_size = batch_size
-
-		self.get_counts()
-		
-		print "Counts for questions"
-		for k,v in self.que_by_tokens.iteritems():
-			print '%d : %d' %(k, len(v))
-		
-		print "Counts for history"
-		for k,v in self.que_by_his_tokens.iteritems():
-			print '%d : %d' %(k, len(v))
 
 	def get_counts(self):
 		que_by_tokens = {}
@@ -49,3 +40,42 @@ class data():
 
 		self.que_by_tokens = que_by_tokens
 		self.que_by_his_tokens = que_by_his_tokens
+
+		print "Counts for questions"
+		for k,v in self.que_by_tokens.iteritems():
+			print '%d : %d' %(k, len(v))
+		
+		print "Counts for history"
+		for k,v in self.que_by_his_tokens.iteritems():
+			print '%d : %d' %(k, len(v))
+
+	def process_for_lfe(self):
+		# repeating all the images 10 times
+		self.img = np.asarray([np.repeat(feature, 10, axis=0) for feature in self.img])
+		# reshaping
+		self.img = self.img.reshape(-1, 4096)
+
+		his = []
+		for i in range(len(self.img)):
+			if i%10 == 0:
+				# the last question answer will never be used.
+				ans_idx = i * 11 / 10
+				prev = self.ans[ans_idx] 
+			else:
+				# i-1 is used for question and ans_idx for answers
+				
+				# removes eos from previous history
+				prev_his = prev[ :prev.shape[0], :]
+				
+				# removes sos and eos tokens from previous question
+				prev_que = self.que[i-1][1:self.que[i-1].shape[0], :]
+
+				# removes sos token from the previous answer
+				prev_ans = self.ans[ans_idx][1: , :]
+				
+				prev = np.concatenate(prev_his, prev_que, prev_ans, axis=0)
+			
+			his.append(prev)
+			ans_idx += 1
+
+		self.his = np.asarray(his)
