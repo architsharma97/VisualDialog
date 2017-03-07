@@ -9,10 +9,6 @@ class data():
 		self.ans_tokens = ans_tokens
 		self.batch_size = batch_size
 
-		print 'Shape of image features: ', img.shape
-		print 'Shape of questions_tensor: ', que.shape
-		print 'Shape of answers_tensor: ', ans.shape
-		print 'Shape of answers_tokens_idx: ', ans_tokens.shape
 		print 'Batch Size: ' + str(batch_size)
 
 	def get_counts(self):
