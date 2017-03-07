@@ -258,6 +258,3 @@ lr = T.scalar(name='lr', dtype='float32')
 # gradients, update parameters
 print "Setting up optimizer"
 f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
-
-for epoch in range(EPOCHS):
-	
