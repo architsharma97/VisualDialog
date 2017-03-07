@@ -9,6 +9,12 @@ class data():
 		self.ans_tokens = ans_tokens
 		self.batch_size = batch_size
 
+		print 'Shape of image features: ', img.shape
+		print 'Shape of questions_tensor: ', que.shape
+		print 'Shape of answers_tensor: ', ans.shape
+		print 'Shape of answers_tokens_idx: ', ans_tokens.shape
+		print 'Batch Size: ' + str(batch_size)
+
 	def get_counts(self):
 		que_by_tokens = {}
 		que_by_his_tokens= {}
@@ -49,12 +55,15 @@ class data():
 		for k,v in self.que_by_his_tokens.iteritems():
 			print '%d : %d' %(k, len(v))
 
+	# call only if you want to crash
 	def process_for_lfe(self):
+		print "Processing images"
 		# repeating all the images 10 times
 		self.img = np.asarray([np.repeat(feature, 10, axis=0) for feature in self.img])
 		# reshaping
 		self.img = self.img.reshape(-1, 4096)
 
+		print "Creating history for each question"
 		his = []
 		for i in range(len(self.img)):
 			if i%10 == 0:

@@ -21,7 +21,7 @@ MODEL_DIR = '../../Models/'
 # VGG16 Specification
 IMAGE_DIM = 4096
 
-# LSTMs Specifications: H=>QA-History+Caption Encoder, Q=>Question Encoder 
+# LSTMs Specifications: H := QA-History+Caption Encoder, Q := Question Encoder 
 LSTM_H_OUT = 512
 LSTM_H_LAYERS = 2
 lstm_prefix_h = 'lstm_h'
@@ -44,6 +44,9 @@ MAX_TOKENS = 50
 # maximum gradient allowed in a step
 GRAD_CLIP = 5.0
 
+# number of epochs
+EPOCHS = 100
+
 print "Loading embedding matrix"
 try:
 	embed = np.transpose(np.load(MODEL_DIR + 'embedding_matrix.npy').astype('float32'))
@@ -63,14 +66,6 @@ except:
 	print "Unable to load dictionaries\nWill be loaded after preprocessing"
 	load_dict = False
 
-# preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False)
-
-print 'Shape of image features: ', image_features.shape
-print 'Shape of questions_tensor: ', questions_tensor.shape
-print 'Shape of answers_tensor: ', answers_tensor.shape
-print 'Shape of answers_tokens_idx: ', answers_tokens_idx.shape
-
 if not load_embedding_data:
 	print "Loading embedding matrix"
 	embed = np.transpose(np.load(MODEL_DIR + 'embedding_matrix.npy').astype('float32'))
@@ -84,13 +79,11 @@ if not load_dict:
 EMBEDDINGS_DIM = embed.shape[0]
 
 print "Testing minibatches"
-train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx)
+# preprocess the training data to get input matrices and tensors
+train_data = minibatch.data(preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False))
 
 # get token counts
 train_data.get_counts()
-
-train_data.process_for_lfe()
-print 'Shape of history created: ', train_data.his.shape
 
 def initialize():
 	'''
@@ -265,3 +258,6 @@ lr = T.scalar(name='lr', dtype='float32')
 # gradients, update parameters
 print "Setting up optimizer"
 f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
+
+for epoch in range(EPOCHS):
+	
