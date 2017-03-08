@@ -14,14 +14,14 @@ class data():
 		self.eos_token = ans_tokens[0][-1]
 
 		print 'Batch Size: ' + str(batch_size)
-		print 'Embedding Size: ' + str(embed_size)
+		print 'Embedding Size: ' + str(self.embed_size)
 
 	def get_counts(self):
 		que_by_tokens = {}
 		que_by_his_tokens= {}
-		que_sizes = np.zeros((len(self.que), ))
-		his_sizes = np.zeros((len(self.que), ))
-		ans_sizes = np.zeros((len(self.his), ))
+		que_sizes = np.zeros((len(self.que), ), dtype=np.int64)
+		his_sizes = np.zeros((len(self.que), ), dtype=np.int64)
+		ans_sizes = np.zeros((len(self.que), ), dtype=np.int64)
 
 		# account for the extra sos and eos symbols
 		for img_idx in range(len(self.img)):
@@ -55,6 +55,7 @@ class data():
 				# update
 				ans_idx = img_idx * 11 + i + 1
 				token_count_his += qlen + self.ans[ans_idx].shape[0] - 4
+				
 				# adding answer size
 				ans_sizes[que_idx] = self.ans[ans_idx].shape[0]
 
@@ -62,7 +63,7 @@ class data():
 		self.que_by_his_tokens = que_by_his_tokens
 		self.que_sizes = que_sizes
 		self.his_sizes = his_sizes
-		self.ans_sizes = ans.sizes
+		self.ans_sizes = ans_sizes
 
 		print "Counts for questions"
 		for k,v in self.que_by_tokens.iteritems():
@@ -131,10 +132,10 @@ class data():
 
 		# checks if enough questions for batch size, else makes a smaller batch
 		if len(self.que_by_tokens[que_tokens][self.curr[1]:]) > self.batch_size:
-			qidx = self.que_by_tokens[que_by_tokens][self.curr[1]: self.curr[1]+self.batch_size]
+			qidx = self.que_by_tokens[que_tokens][self.curr[1]: self.curr[1]+self.batch_size]
 			self.curr[1] += self.batch_size
 		else:
-			qidx = self.que_by_tokens[que_by_tokens][self.curr[1]:]
+			qidx = self.que_by_tokens[que_tokens][self.curr[1]:]
 			self.curr = [self.curr[0] + 1, 0]
 		
 		# first pass to get maximum sizes of history and answers
@@ -143,9 +144,9 @@ class data():
 		for idx in qidx:
 			if self.his_sizes[idx] > mhsize:
 				mhsize = self.his_sizes[idx]
-			if self.ans_sizes > masize:
+			if self.ans_sizes[idx] > masize:
 				masize = self.ans_sizes[idx]
-
+		
 		ibatch = np.zeros((len(qidx), self.img.shape[1])).astype('float32')
 		qbatch = np.zeros((que_tokens, len(qidx), self.embed_size)).astype('float32')
 		hbatch = np.tile(self.eos, (mhsize, len(qidx), 1)).astype('float32')
