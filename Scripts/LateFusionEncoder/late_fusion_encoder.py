@@ -151,7 +151,7 @@ def build_lfe(tparams):
 	out_1 = lstm_layer(tparams, que, _concat(lstm_prefix_q, 1), n_steps=qsteps)
 	
 	# restructure
-	in_2 = T.as_tensor_variable([array[0] for array in out_1])
+	in_2 = T.as_tensor_variable(out_1[0])
 
 	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_q, 2), n_steps=qsteps)
 
