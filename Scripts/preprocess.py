@@ -199,7 +199,7 @@ def preprocess(path_to_data,
 
 			tokens = nltk.word_tokenize(dialog['answer'])
 			sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]))
-			token_indices = np.zeros((len(tokens) + 2, ))
+			token_indices = np.zeros((len(tokens) + 2, ), dtype=np.int64)
 
 			sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
 			token_indices[0] = word_idx_map["<sos>"]

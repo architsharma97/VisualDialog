@@ -158,9 +158,9 @@ class data():
 			ans_idx = (idx/10)*11 + idx%10 + 1
 
 			# construction of answer
-			cur_ans = self.ans_tokens[ans_idx]
-			for j, token in enumerate(cur_ans):
-				abatch[j, i, token] = 1
+			cur_ans = self.ans_tokens[idx]
+			for j in range(len(cur_ans)):
+				abatch[j, i, cur_ans[j]] = 1
 
 			for j in range(len(cur_ans), masize):
 				abatch[j, i, self.eos_token] = 1
