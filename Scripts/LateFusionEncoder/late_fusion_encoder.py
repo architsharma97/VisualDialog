@@ -209,7 +209,7 @@ def build_decoder(tparams, lfcode, max_steps):
 	memory_1 = T.alloc(0., n_samples, hdim1)
 	memory_2 = T.alloc(0., n_samples, hdim2)
 
-	init_token = T.shape_padleft(T.extra_ops.repeat(embeddings.T[word_idx_map['<sos>'], :], n_samples, axis=0))
+	init_token = T.shape_padleft(T.tile(embeddings.T[word_idx_map['<sos>'], :], (n_samples, 1)))
 
 	# initial hidden state for both 1st layer is lfcode
 	tokens, updates = theano.scan(_decode_step,
