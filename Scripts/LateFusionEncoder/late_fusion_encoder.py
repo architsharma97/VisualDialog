@@ -12,6 +12,7 @@ from adam import adam
 import minibatch
 
 from collections import OrderedDict
+import time
 
 print "Initializing constants"
 # constants
@@ -267,7 +268,33 @@ lr = T.scalar(name='lr', dtype='float32')
 print "Setting up optimizer"
 f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
 
+# set learning rate before training
+lrate = 0.01
+
 for epoch in range(EPOCHS):
 	train_data.reset()
 
+	print 'Epoch ', epoch + 1
+
 	for batch_idx in train_data.batches:
+		ibatch, qbatch, hbatch, abatch = train_data.get_batch()
+
+		t_start = time.time()
+		cost = f_grad_shared(ibatch, qbatch, hbatch, abatch)
+		f_update(lrate)
+		td = time.time() - t_start
+
+		print 'Epoch: ', epoch, ' Batch ID: ', batch_idx, ' Cost: ', cost
+
+	if epoch%5 == 0:
+		print 'Saving... '
+
+		params = {}
+		for key, val in tparams.iteritems():
+			params[key] = val.get_value()
+
+		# numpy saving
+		np.savez(MODEL_DIR + 'LFE/lfe_'+str(epoch)+'.npz', **params)
+		print 'Done!'
+
+	print 'Completed Epoch ', epoch + 1 
