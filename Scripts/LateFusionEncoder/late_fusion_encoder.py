@@ -162,14 +162,14 @@ def build_lfe(tparams):
 	out_3 = lstm_layer(tparams, his, _concat(lstm_prefix_h, 1), n_steps=hsteps)
 	
 	# restructure
-	in_4 = T.as_tensor_variable([array[0] for array in out_3])
+	in_4 = T.as_tensor_variable(out_3[0])
 
 	out_4 = lstm_layer(tparams, in_4, _concat(lstm_prefix_h, 2), n_steps=hsteps)
 
 	# samples x dim_projection
-	hcode = out_4[-1][0]
+	hcode = out_4[0][-1]
 
-	# late fusion: concat of hcode, qcode and img2
+	# late fusion: concat of hcode, qcode and img
 	in_5 = T.concatenate([img, qcode, hcode], axis=1)
 	lfcode = fflayer(tparams, in_5, ff_prefix)
 
