@@ -226,19 +226,19 @@ def preprocess(path_to_data,
 	if save_data:
 		print "Saving data for " + split + " split"
 		if split == 'Train':
-			np.save(path_to_data + "Training/train_image_features.npy", image_features)
-			np.save(path_to_data + "Training/questions_tensor.npy", questions_tensor)
-			np.save(path_to_data + "Training/answers_tensor.npy", answers_tensor)
-			np.save(path_to_data + "Training/answers_matrix.npy", answers_matrix)
+			np.savez(path_to_data + "Training/train_image_features.npy", image_features)
+			np.savez(path_to_data + "Training/questions_tensor.npy", questions_tensor)
+			np.savez(path_to_data + "Training/answers_tensor.npy", answers_tensor)
+			np.savez(path_to_data + "Training/answers_matrix.npy", answers_matrix)
 		elif split == 'Val':
-			np.save(path_to_data + "Validation/val_image_features.npy", image_features)
-			np.save(path_to_data + "Validation/questions_tensor.npy", questions_tensor)
-			np.save(path_to_data + "Validation/answers_tensor.npy", answers_tensor)
-			np.save(path_to_data + "Validation/answers_matrix.npy", answers_matrix)
+			np.savez(path_to_data + "Validation/val_image_features.npy", image_features)
+			np.savez(path_to_data + "Validation/questions_tensor.npy", questions_tensor)
+			np.savez(path_to_data + "Validation/answers_tensor.npy", answers_tensor)
+			np.savez(path_to_data + "Validation/answers_matrix.npy", answers_matrix)
 		else:
-			np.save(path_to_data + "Test/test_image_features.npy", image_features)
-			np.save(path_to_data + "Test/questions_tensor.npy", questions_tensor)
-			np.save(path_to_data + "Test/answers_tensor.npy", answers_tensor)
-			np.save(path_to_data + "Test/answers_matrix.npy", answers_matrix)
+			np.savez(path_to_data + "Test/test_image_features.npy", image_features)
+			np.savez(path_to_data + "Test/questions_tensor.npy", questions_tensor)
+			np.savez(path_to_data + "Test/answers_tensor.npy", answers_tensor)
+			np.savez(path_to_data + "Test/answers_matrix.npy", answers_matrix)
 	else:
 		return image_features, questions_tensor, answers_tensor, answers_matrix

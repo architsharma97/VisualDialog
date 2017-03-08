@@ -2,18 +2,26 @@
 import numpy as np
 
 class data():
-	def __init__(self, img, que, ans, ans_tokens, batch_size=128):
+	def __init__(self, img, que, ans, ans_tokens, vocab_size, batch_size=128):
 		self.img = img
 		self.que = que
 		self.ans = ans
 		self.ans_tokens = ans_tokens
 		self.batch_size = batch_size
+		self.embed_size = que[0].shape[1]
+		self.eos = que[0][-1,:]
+		self.vocab_size = vocab_size
+		self.eos_token = ans_tokens[0][-1]
 
 		print 'Batch Size: ' + str(batch_size)
+		print 'Embedding Size: ' + str(embed_size)
 
 	def get_counts(self):
 		que_by_tokens = {}
 		que_by_his_tokens= {}
+		que_sizes = np.zeros((len(self.que), ))
+		his_sizes = np.zeros((len(self.que), ))
+		ans_sizes = np.zeros((len(self.his), ))
 
 		# account for the extra sos and eos symbols
 		for img_idx in range(len(self.img)):
@@ -22,15 +30,23 @@ class data():
 			token_count_his = self.ans[img_idx*11].shape[0] - 2
 
 			for i in range(10):
-				que_idx = img_idx * 10 + i
-				
+				que_idx = img_idx * 10 + i 
+
 				qlen = self.que[que_idx].shape[0]
+				# adding size of question
+				que_sizes[que_idx] = qlen
+
+				# adding to dictionary
 				if qlen in que_by_tokens:
 					que_by_tokens[qlen].append(que_idx)
 				else:
 					que_by_tokens[qlen] = [que_idx]
 
 				hislen = token_count_his + 2
+				# adding size of history
+				his_sizes[que_idx] = hislen
+
+				# adding to dictionary
 				if hislen in que_by_his_tokens:
 					que_by_his_tokens[hislen].append(que_idx)
 				else:
@@ -39,9 +55,14 @@ class data():
 				# update
 				ans_idx = img_idx * 11 + i + 1
 				token_count_his += qlen + self.ans[ans_idx].shape[0] - 4
+				# adding answer size
+				ans_sizes[que_idx] = self.ans[ans_idx].shape[0]
 
 		self.que_by_tokens = que_by_tokens
 		self.que_by_his_tokens = que_by_his_tokens
+		self.que_sizes = que_sizes
+		self.his_sizes = his_sizes
+		self.ans_sizes = ans.sizes
 
 		print "Counts for questions"
 		for k,v in self.que_by_tokens.iteritems():
@@ -51,6 +72,18 @@ class data():
 		for k,v in self.que_by_his_tokens.iteritems():
 			print '%d : %d' %(k, len(v))
 
+		print "Computing number of batches"
+		self.batches = 0
+		# batches are constructed such that question lengths
+		for key, val in self.que_by_tokens.iteritems():
+			if not len(val)%self.batch_size:
+				self.batches += len(val)/self.batch_size + 1
+			else:
+				self.batches += len(val)/self.batch_size
+
+		# getting a list of allowed tokens in questions
+		self.qlen_order = [key for key, val in self.que_by_tokens.iteritems()]
+	
 	# call only if you want to crash
 	def process_for_lfe(self):
 		print "Processing images"
@@ -84,3 +117,52 @@ class data():
 			ans_idx += 1
 
 		self.his = np.asarray(his)
+
+	def reset(self):
+		np.random.shuffle(self.qlen_order)
+		for key, val in self.que_by_tokens.iteritems():
+			np.random.shuffle(self.que_by_tokens[key])
+
+		self.curr = [0, 0]
+
+	def get_batch(self):
+		# getting number of tokens in the question matrix
+		que_tokens = self.qlen_order[self.curr[0]]
+
+		# checks if enough questions for batch size, else makes a smaller batch
+		if len(self.que_by_tokens[que_tokens][self.curr[1]:]) > self.batch_size:
+			qidx = self.que_by_tokens[que_by_tokens][self.curr[1]: self.curr[1]+self.batch_size]
+			self.curr[1] += self.batch_size
+		else:
+			qidx = self.que_by_tokens[que_by_tokens][self.curr[1]:]
+			self.curr = [self.curr[0] + 1, 0]
+		
+		mhsize = 0
+		masize = 0
+		# first pass to get 
+		for idx in qidx:
+			if self.his_sizes[idx] > mhsize:
+				mhsize = self.his_sizes[idx]
+			if self.ans_sizes > masize:
+				masize = self.ans_sizes[idx]
+
+		ibatch = np.zeros((len(qidx), self.img.shape[1])).astype('float32')
+		qbatch = np.zeros((que_tokens, len(qidx), self.embed_size)).astype('float32')
+		hbatch = np.tile(self.eos, (mhsize, len(qidx), 1)).astype('float32')
+		abatch = np.zeros((masize, len(qidx), self.vocab_size)).astype('int64')
+
+		for i, idx in enumerate(qidx):
+			qbatch[:, i, :] = self.que[idx]
+			ibatch[i, :] = self.img[idx/10, :]
+			ans_idx = (idx/10)*11 + idx%10 + 1
+
+			# construction of answer
+			cur_ans = self.ans_tokens[ans_idx]
+			for j, token in enumerate(cur_ans):
+				abatch[j, idx, token] = 1
+
+			for j in range(len(cur_ans), masize):
+				abatch[j, idx, self.eos_token] = 1
+
+			# contruction of history batch
+			for j in range(idx/10, )

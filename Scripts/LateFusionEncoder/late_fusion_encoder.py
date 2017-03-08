@@ -88,7 +88,7 @@ if not load_dict:
 EMBEDDINGS_DIM = embed.shape[0]
 
 print "Testing minibatches"
-train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx)
+train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map))
 
 # get token counts
 train_data.get_counts()
@@ -227,7 +227,7 @@ img, que, his, lfcode = build_lfe(tparams)
 
 # answer tensor should be a binary tensor with 1's at the positions which needs to be included
 # timesteps x number of answers in minibatch x vocabulary size
-ans = T.tensor3('ans', dtype='float32')
+ans = T.tensor3('ans', dtype='int64')
 
 print "Building decoder"
 pred = build_decoder(tparams, lfcode, MAX_TOKENS)
@@ -266,3 +266,8 @@ lr = T.scalar(name='lr', dtype='float32')
 # gradients, update parameters
 print "Setting up optimizer"
 f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
+
+for epoch in range(EPOCHS):
+	train_data.reset()
+
+	for batch_idx in train_data.batches:
