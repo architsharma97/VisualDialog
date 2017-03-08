@@ -8,3 +8,4 @@ Data/Embeddings/glove.6B.300d.txt
 *.npy
 *.pkl
 *.pyc
+*.npz
