@@ -231,7 +231,7 @@ img, que, his, lfcode = build_lfe(tparams)
 ans = T.tensor3('ans', dtype='int64')
 
 print "Building decoder"
-pred = build_decoder(tparams, lfcode, MAX_TOKENS)
+pred = build_decoder(tparams, lfcode, ans.shape[0])
 
 print "Building cost function"
 # cost function
