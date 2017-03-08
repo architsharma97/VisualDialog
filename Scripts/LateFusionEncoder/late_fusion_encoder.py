@@ -276,7 +276,7 @@ for epoch in range(EPOCHS):
 
 	print 'Epoch ', epoch + 1
 
-	for batch_idx in train_data.batches:
+	for batch_idx in range(train_data.batches):
 		ibatch, qbatch, hbatch, abatch = train_data.get_batch()
 
 		t_start = time.time()
