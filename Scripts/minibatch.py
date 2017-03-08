@@ -137,9 +137,9 @@ class data():
 			qidx = self.que_by_tokens[que_by_tokens][self.curr[1]:]
 			self.curr = [self.curr[0] + 1, 0]
 		
+		# first pass to get maximum sizes of history and answers
 		mhsize = 0
 		masize = 0
-		# first pass to get 
 		for idx in qidx:
 			if self.his_sizes[idx] > mhsize:
 				mhsize = self.his_sizes[idx]
@@ -159,10 +159,25 @@ class data():
 			# construction of answer
 			cur_ans = self.ans_tokens[ans_idx]
 			for j, token in enumerate(cur_ans):
-				abatch[j, idx, token] = 1
+				abatch[j, i, token] = 1
 
 			for j in range(len(cur_ans), masize):
-				abatch[j, idx, self.eos_token] = 1
+				abatch[j, i, self.eos_token] = 1
 
 			# contruction of history batch
-			for j in range(idx/10, )
+			cur_len = self.ans[(idx/10)*11].shape[0] - 1
+			# append caption to history
+			hbatch[:cur_len, i, :] = self.ans[(idx/10)*11][:-1,:]
+			for j in range((idx/10)*10, idx):
+				# append question to history
+				qclen = self.que[j].shape[0] - 2
+				hbatch[cur_len:cur_len+qclen, i, :] = self.que[j][1:-1, :]
+				cur_len += qclen
+				
+				# append answer to history
+				ans_idx = (j/10)*11 + j%10 + 1
+				aclen = self.ans[ans_idx].shape[0] - 2
+				hbatch[cur_len:cur_len+aclen,i, :] = self.ans[ans_idx][1:-1, :]
+				cur_len += aclen
+
+		return ibatch, qbatch, hbatch, abatch
