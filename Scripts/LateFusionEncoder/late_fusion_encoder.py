@@ -199,7 +199,7 @@ def build_decoder(tparams, lfcode, max_steps):
 		Chooses the right element from the outputs for softmax
 		'''
 		# for numerical stability of the output
-		return T.nnet.softmax(T.dot(inp, embeddings)) + 10**(-4)
+		return T.nnet.softmax(T.dot(inp, embeddings)) + 1e-8
 
 	n_samples = lfcode.shape[0]
 	hdim1 = lfcode.shape[1]
@@ -236,7 +236,7 @@ pred = build_decoder(tparams, lfcode, ans.shape[0])
 
 print "Building cost function"
 # cost function
-cost = -T.log(pred*ans).sum()
+cost = -(T.log(pred) * ans).sum()
 
 inps = [img, que, his, ans]
 
