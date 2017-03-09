@@ -89,7 +89,7 @@ if not load_dict:
 EMBEDDINGS_DIM = embed.shape[0]
 
 print "Testing minibatches"
-train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map))
+train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=1)
 
 # get token counts
 train_data.get_counts()
