@@ -269,7 +269,7 @@ print "Setting up optimizer"
 f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
 
 # set learning rate before training
-lrate = 0.005
+lrate = 0.01
 
 for epoch in range(EPOCHS):
 	train_data.reset()
