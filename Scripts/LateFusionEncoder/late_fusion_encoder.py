@@ -89,7 +89,7 @@ if not load_dict:
 EMBEDDINGS_DIM = embed.shape[0]
 
 print "Testing minibatches"
-train_data = minibatch.data(image_features[:10,:], questions_tensor[:100], answers_tensor[:110], answers_tokens_idx[:100], len(idx_word_map))
+train_data = minibatch.data(image_features[:100,:], questions_tensor[:1000], answers_tensor[:1100], answers_tokens_idx[:1000], len(idx_word_map))
 
 # get token counts
 train_data.get_counts()
@@ -294,7 +294,7 @@ for epoch in range(EPOCHS):
 			params[key] = val.get_value()
 
 		# numpy saving
-		np.savez(MODEL_DIR + 'LFE/lfe_'+str(epoch)+'.npz', **params)
+		np.savez(MODEL_DIR + 'LFE/lfe_'+str(epoch + 1)+'.npz', **params)
 		print 'Done!'
 
 	print 'Completed Epoch ', epoch + 1 
