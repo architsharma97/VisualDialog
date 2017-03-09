@@ -235,7 +235,7 @@ pred = build_decoder(tparams, lfcode, ans.shape[0])
 
 print "Building cost function"
 # cost function
-cost = -T.log(pred*ans + 10**(-4)).sum()
+cost = -T.log(pred*ans + 10**(-6)).sum()
 
 inps = [img, que, his, ans]
 
@@ -269,7 +269,7 @@ print "Setting up optimizer"
 f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
 
 # set learning rate before training
-lrate = 0.01
+lrate = 0.001
 
 for epoch in range(EPOCHS):
 	train_data.reset()
