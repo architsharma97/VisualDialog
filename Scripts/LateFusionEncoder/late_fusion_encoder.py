@@ -46,7 +46,7 @@ MAX_TOKENS = 50
 GRAD_CLIP = 5.0
 
 # number of epochs
-EPOCHS = 100
+EPOCHS = 1000
 
 print "Loading embedding matrix"
 try:
