@@ -156,7 +156,7 @@ def build_lfe(tparams):
 	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_q, 2), n_steps=qsteps)
 
 	# samples x dim_projection
-	qcode = out_2[-1][0]
+	qcode = out_2[0][-1]
 
 	# encoding history
 	out_3 = lstm_layer(tparams, his, _concat(lstm_prefix_h, 1), n_steps=hsteps)
@@ -286,7 +286,7 @@ for epoch in range(EPOCHS):
 		f_update(lrate)
 		td = time.time() - t_start
 
-		print 'Epoch: ', epoch, ' Batch ID: ', batch_idx, ' Cost: ', cost
+		print 'Epoch: ', epoch, ' Batch ID: ', batch_idx, ' Cost: ', cost, ' Time: ', td
 
 	if (epoch+1)%5 == 0:
 		print 'Saving... '
