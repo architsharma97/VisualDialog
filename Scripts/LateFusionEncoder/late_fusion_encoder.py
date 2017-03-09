@@ -89,7 +89,7 @@ if not load_dict:
 EMBEDDINGS_DIM = embed.shape[0]
 
 print "Testing minibatches"
-train_data = minibatch.data(image_features[:100,:], questions_tensor[:1000], answers_tensor[:1100], answers_tokens_idx[:1000], len(idx_word_map))
+train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map))
 
 # get token counts
 train_data.get_counts()
@@ -236,7 +236,7 @@ pred = build_decoder(tparams, lfcode, ans.shape[0])
 print "Building cost function"
 # cost function
 # term added for numerical stability
-cost = -T.log((pred + 10**(-4)) * ans).sum()
+cost = T.nnet.categorical_crossentropy(pred, ans).sum()
 
 inps = [img, que, his, ans]
 
