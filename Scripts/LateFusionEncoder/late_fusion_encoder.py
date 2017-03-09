@@ -194,11 +194,11 @@ def build_decoder(tparams, lfcode, max_steps):
 
 		return h_2, h_1, h_2, c_1, c_2
 		
-	def _softmax(*inp):
+	def _softmax(inp):
 		'''
 		Chooses the right element from the outputs for softmax
 		'''
-		return T.nnet.softmax(T.dot(inp[2], embeddings))
+		return T.nnet.softmax(T.dot(inp, embeddings))
 
 	n_samples = lfcode.shape[0]
 	hdim1 = lfcode.shape[1]
@@ -216,7 +216,7 @@ def build_decoder(tparams, lfcode, max_steps):
 									outputs_info=[init_token, init_h1, init_h2, memory_1, memory_2],
 									n_steps=max_steps)
 
-	soft_tokens, updates = theano.scan(_softmax, sequences=tokens)
+	soft_tokens, updates = theano.scan(_softmax, sequences=tokens[2])
 
 	return T.as_tensor_variable(soft_tokens)
 
@@ -248,7 +248,7 @@ param_list=[val for key, val in tparams.iteritems()]
 grads = T.grad(cost, wrt=param_list)
 
 # computing norms
-f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
+f_grad_norm = theano.function(theano.In(inps, borrow=True), [(g**2).sum() for g in grads], profile=False)
 f_weight_norm = theano.function([], [(v**2).sum() for k,v in tparams.iteritems()], profile=False)
 
 # gradient is clipped beyond certain values
