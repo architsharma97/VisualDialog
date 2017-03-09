@@ -269,25 +269,28 @@ print "Setting up optimizer"
 f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
 
 # set learning rate before training
-lrate = 0.001
+lrate = 0.01
 
 for epoch in range(EPOCHS):
 	train_data.reset()
 
 	print 'Epoch ', epoch + 1
-
+	epoch_cost = 0.0
+	
 	for batch_idx in range(train_data.batches):
 		ibatch, qbatch, hbatch, abatch = train_data.get_batch()
 
-		print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
+		# print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
 		
 		t_start = time.time()
 		cost = f_grad_shared(ibatch, qbatch, hbatch, abatch)
 		f_update(lrate)
 		td = time.time() - t_start
 
+		epoch_cost += cost
 		print 'Epoch: ', epoch, ' Batch ID: ', batch_idx, ' Cost: ', cost, ' Time: ', td
 
+	print 'Epoch cost: ', epoch_cost
 	if (epoch+1)%5 == 0:
 		print 'Saving... '
 
