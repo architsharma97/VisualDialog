@@ -75,9 +75,9 @@ class data():
 
 		print "Computing number of batches"
 		self.batches = 0
-		# batches are constructed such that question lengths
+		# batches are constructed such that question lengths are same
 		for key, val in self.que_by_tokens.iteritems():
-			if not len(val)%self.batch_size:
+			if (len(val)) % (self.batch_size):
 				self.batches += len(val)/self.batch_size + 1
 			else:
 				self.batches += len(val)/self.batch_size
@@ -153,7 +153,7 @@ class data():
 		ibatch = np.zeros((len(qidx), self.img.shape[1])).astype('float32')
 		qbatch = np.zeros((que_tokens, len(qidx), self.embed_size)).astype('float32')
 		hbatch = np.tile(self.eos, (mhsize, len(qidx), 1)).astype('float32')
-		abatch = np.zeros((masize-1, len(qidx), self.vocab_size)).astype('int64')
+		abatch = np.zeros((masize, len(qidx), self.vocab_size)).astype('int64')
 
 		for i, idx in enumerate(qidx):
 			qbatch[:, i, :] = self.que[idx]
@@ -162,11 +162,11 @@ class data():
 
 			# construction of answer
 			cur_ans = self.ans_tokens[idx]
-			for j in range(1 , len(cur_ans)):
-				abatch[j-1, i, cur_ans[j]] = 1
+			for j in range(len(cur_ans)):
+				abatch[j, i, cur_ans[j]] = 1
 
 			for j in range(len(cur_ans), masize):
-				abatch[j-1, i, self.eos_token] = 1
+				abatch[j, i, self.eos_token] = 1
 
 			# contruction of history batch
 			cur_len = self.ans[(idx/10)*11].shape[0] - 1
