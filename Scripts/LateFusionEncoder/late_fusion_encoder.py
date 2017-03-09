@@ -277,7 +277,8 @@ for epoch in range(EPOCHS):
 
 	print 'Epoch ', epoch + 1
 	epoch_cost = 0.0
-	
+	epoch_start = time.time()
+
 	for batch_idx in range(train_data.batches):
 		ibatch, qbatch, hbatch, abatch = train_data.get_batch()
 
@@ -289,9 +290,10 @@ for epoch in range(EPOCHS):
 		td = time.time() - t_start
 
 		epoch_cost += cost
-		print 'Epoch: ', epoch, ' Batch ID: ', batch_idx, ' Cost: ', cost, ' Time: ', td
+		# print 'Epoch: ', epoch, ' Batch ID: ', batch_idx, ' Cost: ', cost, ' Time: ', td
 
-	print 'Epoch cost: ', epoch_cost
+	print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
+
 	if (epoch+1)%5 == 0:
 		print 'Saving... '
 
