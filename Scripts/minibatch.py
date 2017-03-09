@@ -82,6 +82,8 @@ class data():
 			else:
 				self.batches += len(val)/self.batch_size
 
+		print 'Number of Batches: ' + str(self.batches)
+
 		# getting a list of allowed tokens in questions
 		self.qlen_order = [key for key, val in self.que_by_tokens.iteritems()]
 	

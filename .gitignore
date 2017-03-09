@@ -9,3 +9,4 @@ Data/Embeddings/glove.6B.300d.txt
 *.pkl
 *.pyc
 *.npz
+BugReports/
