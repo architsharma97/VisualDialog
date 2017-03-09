@@ -279,6 +279,8 @@ for epoch in range(EPOCHS):
 	for batch_idx in range(train_data.batches):
 		ibatch, qbatch, hbatch, abatch = train_data.get_batch()
 
+		print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
+		
 		t_start = time.time()
 		cost = f_grad_shared(ibatch, qbatch, hbatch, abatch)
 		f_update(lrate)
