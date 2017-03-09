@@ -160,7 +160,7 @@ def preprocess(path_to_data,
 
 	# add sos and eos symbol always
 	# check for unknown symbols
-	for idx in range(100):
+	for idx in range(len(data)):
 		# image coco id extracted
 		image_ids[idx] = int(data[idx]['image_id'])
 
@@ -215,10 +215,10 @@ def preprocess(path_to_data,
 			sentence_matrix[len(tokens) + 1,:] = embeddings[word_idx_map["<eos>"]]
 			token_indices[len(tokens) + 1] = word_idx_map["<eos>"]
 			answers_tensor.append(sentence_matrix)
-			answers_matrix.append(token_indices)
+			answers_matrix.append(token_indices[1:])
 			
 	# gets image features using the coco_ids
-	image_features = get_vgg16_features(image_ids[:100], path_to_data)
+	image_features = get_vgg16_features(image_ids, path_to_data)
 	questions_tensor = np.asarray(questions_tensor)
 	answers_tensor = np.asarray(answers_tensor)
 	answers_matrix = np.asarray(answers_matrix)
