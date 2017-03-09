@@ -149,10 +149,11 @@ class data():
 			if self.ans_sizes[idx] > masize:
 				masize = self.ans_sizes[idx]
 		
+		# answer tokens does not need the start token as the first token in predicted answer will not be start token. 
 		ibatch = np.zeros((len(qidx), self.img.shape[1])).astype('float32')
 		qbatch = np.zeros((que_tokens, len(qidx), self.embed_size)).astype('float32')
 		hbatch = np.tile(self.eos, (mhsize, len(qidx), 1)).astype('float32')
-		abatch = np.zeros((masize, len(qidx), self.vocab_size)).astype('int64')
+		abatch = np.zeros((masize-1, len(qidx), self.vocab_size)).astype('int64')
 
 		for i, idx in enumerate(qidx):
 			qbatch[:, i, :] = self.que[idx]
@@ -161,11 +162,11 @@ class data():
 
 			# construction of answer
 			cur_ans = self.ans_tokens[idx]
-			for j in range(len(cur_ans)):
-				abatch[j, i, cur_ans[j]] = 1
+			for j in range(1 , len(cur_ans)):
+				abatch[j-1, i, cur_ans[j]] = 1
 
 			for j in range(len(cur_ans), masize):
-				abatch[j, i, self.eos_token] = 1
+				abatch[j-1, i, self.eos_token] = 1
 
 			# contruction of history batch
 			cur_len = self.ans[(idx/10)*11].shape[0] - 1
