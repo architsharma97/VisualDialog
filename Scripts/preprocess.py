@@ -218,7 +218,7 @@ def preprocess(path_to_data,
 			answers_matrix.append(token_indices)
 			
 	# gets image features using the coco_ids
-	image_features = get_vgg16_features(image_ids, path_to_data)
+	image_features = get_vgg16_features(image_ids[:100], path_to_data)
 	questions_tensor = np.asarray(questions_tensor)
 	answers_tensor = np.asarray(answers_tensor)
 	answers_matrix = np.asarray(answers_matrix)
