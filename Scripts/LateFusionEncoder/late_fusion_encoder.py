@@ -235,7 +235,8 @@ pred = build_decoder(tparams, lfcode, ans.shape[0])
 
 print "Building cost function"
 # cost function
-cost = -T.log((pred + 10**(-6)) * ans).sum()
+# term added for numerical stability
+cost = -T.log((pred + 10**(-4)) * ans).sum()
 
 inps = [img, que, his, ans]
 
