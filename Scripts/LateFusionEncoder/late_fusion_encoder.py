@@ -248,7 +248,7 @@ param_list=[val for key, val in tparams.iteritems()]
 grads = T.grad(cost, wrt=param_list)
 
 # computing norms
-f_grad_norm = theano.function(theano.In(inps, borrow=True), [(g**2).sum() for g in grads], profile=False)
+f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
 f_weight_norm = theano.function([], [(v**2).sum() for k,v in tparams.iteritems()], profile=False)
 
 # gradient is clipped beyond certain values
