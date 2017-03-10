@@ -46,7 +46,7 @@ MAX_TOKENS = 50
 GRAD_CLIP = 5.0
 
 # number of epochs
-EPOCHS = 1000
+EPOCHS = 100
 
 print "Loading embedding matrix"
 try:
@@ -69,7 +69,7 @@ except:
 
 print "Preprocessing data"
 # preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False, reduced_instances=10)
+image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False, reduced_instances=-1)
 
 print 'Shape of image features: ', image_features.shape
 print 'Shape of questions_tensor: ', questions_tensor.shape
@@ -89,7 +89,7 @@ if not load_dict:
 EMBEDDINGS_DIM = embed.shape[0]
 
 print "Testing minibatches"
-train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=10)
+train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=128)
 
 # get token counts
 train_data.get_counts()
@@ -270,7 +270,10 @@ print "Setting up optimizer"
 f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
 
 # set learning rate before training
-lrate = 0.01
+lrate = 0.001
+
+# time and cost will be output to the text file in BugReports folder
+training_output = open('../../BugReports/lfe_train_output.txt','w')
 
 for epoch in range(EPOCHS):
 	train_data.reset()
@@ -290,11 +293,14 @@ for epoch in range(EPOCHS):
 		td = time.time() - t_start
 
 		epoch_cost += cost
-		# print 'Epoch: ', epoch, ' Batch ID: ', batch_idx, ' Cost: ', cost, ' Time: ', td
+		
+		if not batch_idx % 20:
+			training_output.write('Epoch: ' + str(epoch) + ', Batch ID: ' + str(batch_idx) + ', Cost: ' + str(cost) + ', Time: ' + str(td) + '\n')
 
 	print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
-
-	if (epoch+1)%5 == 0:
+	training_output.write('Epoch: ' + str(epoch + 1) + ', Cost: ' + str(epoch_cost) + ', Time: ' + str(time.time()-epoch_start) + '\n' )
+	
+	if (epoch+1) % 5 == 0:
 		print 'Saving... '
 
 		params = {}
