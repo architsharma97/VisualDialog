@@ -69,7 +69,7 @@ except:
 
 print "Preprocessing data"
 # preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False)
+image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False, reduced_instances=10)
 
 print 'Shape of image features: ', image_features.shape
 print 'Shape of questions_tensor: ', questions_tensor.shape
@@ -89,7 +89,7 @@ if not load_dict:
 EMBEDDINGS_DIM = embed.shape[0]
 
 print "Testing minibatches"
-train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=1)
+train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=10)
 
 # get token counts
 train_data.get_counts()
@@ -198,7 +198,7 @@ def build_decoder(tparams, lfcode, max_steps):
 		'''
 		Chooses the right element from the outputs for softmax
 		'''
-		# for numerical stability of the output
+		# for numerical stability of the output, a small value is added to all probabilities
 		return T.nnet.softmax(T.dot(inp, embeddings)) + 1e-8
 
 	n_samples = lfcode.shape[0]

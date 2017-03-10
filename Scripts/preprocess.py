@@ -18,14 +18,16 @@ def preprocess(path_to_data,
 	load_embedding_matrix=False, 
 	save_embedding_matrix=True, 
 	save_data=True, 
-	split='Train'):
+	split='Train',
+	reduced_instances=-1):
 	
 	'''
 	path_to_data: path from function call to the Data folder
 	load_*: load previously created dictionaries/embeddings. Automatically disbles save_*. Should be True for Validation/Testing.
 	save_*: Save the embeddings/dictionaries created
 	split: the data which is being processed. Can be 'Train', 'Val', 'Test'
-	
+	reduced_instances: for testing the model, reduce the training set. -1 implies the complete training set. Otherwise, pass the number of images
+
 	Example: '../../Data/'
 	Note: Saving and reading in data can be terribly slow. Rerunning this script is easier.
 	'''
@@ -160,7 +162,14 @@ def preprocess(path_to_data,
 
 	# add sos and eos symbol always
 	# check for unknown symbols
-	for idx in range(len(data)):
+	if not reduced_instances == -1:
+		num_instances = reduced_instances
+		# update the length of image ids
+		image_ids = image_ids[:num_instances]
+	else:
+		num_instances = len(data)
+
+	for idx in range(num_instances):
 		# image coco id extracted
 		image_ids[idx] = int(data[idx]['image_id'])
 
