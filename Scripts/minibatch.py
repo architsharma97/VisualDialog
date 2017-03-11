@@ -153,7 +153,7 @@ class data():
 		ibatch = np.zeros((len(qidx), self.img.shape[1])).astype('float32')
 		qbatch = np.zeros((que_tokens, len(qidx), self.embed_size)).astype('float32')
 		hbatch = np.tile(self.eos, (mhsize, len(qidx), 1)).astype('float32')
-		abatch = np.zeros((masize, len(qidx), self.vocab_size)).astype('int64')
+		abatch = np.zeros((masize, len(qidx), self.vocab_size)).astype('int8')
 
 		for i, idx in enumerate(qidx):
 			qbatch[:, i, :] = self.que[idx]
