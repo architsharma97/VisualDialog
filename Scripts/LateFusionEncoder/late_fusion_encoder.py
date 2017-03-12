@@ -40,7 +40,6 @@ ff_prefix = 'ff'
 LSTM_D_OUT = 512
 LSTM_D_LAYERS = 2
 lstm_prefix_d = 'lstm_d'
-MAX_TOKENS = 50
 
 # maximum gradient allowed in a step
 GRAD_CLIP = 5.0
@@ -182,7 +181,7 @@ def build_decoder(tparams, lfcode, max_steps):
 	
 	global DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, \
 		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, embeddings, \
-		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix, MAX_TOKENS, word_idx_map
+		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix, word_idx_map
 
 	def _decode_step(sbelow, sbefore_1, sbefore_2, cell_before_1, cell_before_2):
 		'''
@@ -252,7 +251,7 @@ grads = T.grad(cost, wrt=param_list)
 f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
 f_weight_norm = theano.function([], [(v**2).sum() for k,v in tparams.iteritems()], profile=False)
 
-# gradient is clipped beyond certain values
+# gradients are clipped beyond certain values
 g2 = 0.
 for g in grads:
 	g2 += (g**2).sum()
@@ -283,12 +282,14 @@ for epoch in range(EPOCHS):
 	epoch_start = time.time()
 
 	for batch_idx in range(train_data.batches):
-		ibatch, qbatch, hbatch, abatch = train_data.get_batch()
+		# ibatch, qbatch, hbatch, abatch = train_data.get_batch()
 
 		# print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
 		
 		t_start = time.time()
-		cost = f_grad_shared(ibatch, qbatch, hbatch, abatch)
+		# directly unfolds the tuple returned as arguments to the function
+		# reduces memory footprint
+		cost = f_grad_shared(*train_data.get_batch())
 		f_update(lrate)
 		td = time.time() - t_start
 

@@ -17,11 +17,11 @@ class data():
 		print 'Embedding Size: ' + str(self.embed_size)
 
 	def get_counts(self):
-		que_by_tokens = {}
+		que_by_tokens = [{} for i in range(10)]
 		que_by_his_tokens= {}
-		que_sizes = np.zeros((len(self.que), ), dtype=np.int64)
-		his_sizes = np.zeros((len(self.que), ), dtype=np.int64)
-		ans_sizes = np.zeros((len(self.que), ), dtype=np.int64)
+		que_sizes = np.zeros((len(self.que), ), dtype=np.int16)
+		his_sizes = np.zeros((len(self.que), ), dtype=np.int16)
+		ans_sizes = np.zeros((len(self.que), ), dtype=np.int16)
 
 		# account for the extra sos and eos symbols
 		for img_idx in range(len(self.img)):
@@ -37,10 +37,10 @@ class data():
 				que_sizes[que_idx] = qlen
 
 				# adding to dictionary
-				if qlen in que_by_tokens:
-					que_by_tokens[qlen].append(que_idx)
+				if qlen in que_by_tokens[i]:
+					que_by_tokens[i][qlen].append(que_idx)
 				else:
-					que_by_tokens[qlen] = [que_idx]
+					que_by_tokens[i][qlen] = [que_idx]
 
 				hislen = token_count_his + 2
 				# adding size of history
@@ -65,9 +65,14 @@ class data():
 		self.his_sizes = his_sizes
 		self.ans_sizes = ans_sizes
 
+		# questions are binned at two levels
+		# 1) The index at which they were asked with respect to the image
+		# 2) The number of tokens in the questions
 		print "Counts for questions"
-		for k,v in self.que_by_tokens.iteritems():
-			print '%d : %d' %(k, len(v))
+		for i in range(10):
+			print "For questions asked at position " + str(i + 1)
+			for k,v in self.que_by_tokens[i].iteritems():
+				print '%d : %d' %(k, len(v))
 		
 		print "Counts for history"
 		for k,v in self.que_by_his_tokens.iteritems():
@@ -76,17 +81,23 @@ class data():
 		print "Computing number of batches"
 		self.batches = 0
 		# batches are constructed such that question lengths are same
-		for key, val in self.que_by_tokens.iteritems():
-			if (len(val)) % (self.batch_size):
-				self.batches += len(val)/self.batch_size + 1
-			else:
-				self.batches += len(val)/self.batch_size
+		for i in range(10):
+			for key, val in self.que_by_tokens[i].iteritems():
+				if (len(val)) % (self.batch_size):
+					self.batches += len(val)/self.batch_size + 1
+				else:
+					self.batches += len(val)/self.batch_size
 
 		print 'Number of Batches: ' + str(self.batches)
 
 		# getting a list of allowed tokens in questions
-		self.qlen_order = [key for key, val in self.que_by_tokens.iteritems()]
-	
+		self.qlen_order = []
+		for i in range(10):
+			self.qlen_order += [key for key, val in self.que_by_tokens[i].iteritems()]
+		# removing redundant entries
+		self.qlen_order = set(self.qlen_order)
+		self.qlen_order = list(self.qlen_order)
+
 	# call only if you want to crash
 	def process_for_lfe(self):
 		print "Processing images"
@@ -123,22 +134,36 @@ class data():
 
 	def reset(self):
 		np.random.shuffle(self.qlen_order)
-		for key, val in self.que_by_tokens.iteritems():
-			np.random.shuffle(self.que_by_tokens[key])
+		for i in range(10):
+			for key, val in self.que_by_tokens[i].iteritems():
+				np.random.shuffle(self.que_by_tokens[i][key])
 
-		self.curr = [0, 0]
+		# question ordered wrt image, index in qlen_order, index in the list of questions associated with previous two
+		self.curr = [0, 0, 0]
+		while self.qlen_order[self.curr[1]] not in self.que_by_tokens[self.curr[0]]:
+			self.curr[0] += 1
 
 	def get_batch(self):
 		# getting number of tokens in the question matrix
-		que_tokens = self.qlen_order[self.curr[0]]
+		que_order_idx = self.curr[0]
+		que_tokens = self.qlen_order[self.curr[1]]
 
 		# checks if enough questions for batch size, else makes a smaller batch
-		if len(self.que_by_tokens[que_tokens][self.curr[1]:]) > self.batch_size:
-			qidx = self.que_by_tokens[que_tokens][self.curr[1]: self.curr[1]+self.batch_size]
-			self.curr[1] += self.batch_size
+		if len(self.que_by_tokens[que_order_idx][que_tokens][self.curr[2]:]) > self.batch_size:
+			qidx = self.que_by_tokens[que_order_idx][que_tokens][self.curr[2]: self.curr[2]+self.batch_size]
+			self.curr[2] += self.batch_size
 		else:
-			qidx = self.que_by_tokens[que_tokens][self.curr[1]:]
-			self.curr = [self.curr[0] + 1, 0]
+			qidx = self.que_by_tokens[que_order_idx][que_tokens][self.curr[2]:]
+			que_order_idx += 1
+			while que_order_idx < 10 and (que_tokens not in self.que_by_tokens[que_order_idx]):
+				que_order_idx += 1
+
+			if que_order_idx < 10:
+				self.curr = [que_order_idx, self.curr[1], 0]
+			else:
+				self.curr = [0, self.curr[1] + 1, 0]
+				while self.qlen_order[self.curr[1]] not in self.que_by_tokens[self.curr[0]]:
+					self.curr[0] += 1
 		
 		# first pass to get maximum sizes of history and answers
 		mhsize = 0
@@ -150,10 +175,10 @@ class data():
 				masize = self.ans_sizes[idx]
 		
 		# answer tokens does not need the start token as the first token in predicted answer will not be start token. 
-		ibatch = np.zeros((len(qidx), self.img.shape[1])).astype('float32')
-		qbatch = np.zeros((que_tokens, len(qidx), self.embed_size)).astype('float32')
+		ibatch = np.zeros((len(qidx), self.img.shape[1]), dtype=np.float32)
+		qbatch = np.zeros((que_tokens, len(qidx), self.embed_size), dtype=np.float32)
 		hbatch = np.tile(self.eos, (mhsize, len(qidx), 1)).astype('float32')
-		abatch = np.zeros((masize, len(qidx), self.vocab_size)).astype('int8')
+		abatch = np.zeros((masize, len(qidx), self.vocab_size),  dtype=np.int8)
 
 		for i, idx in enumerate(qidx):
 			qbatch[:, i, :] = self.que[idx]

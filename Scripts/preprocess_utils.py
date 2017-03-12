@@ -56,10 +56,10 @@ def get_embeddings(vocab, path, glove=True, EMBEDDING_SIZE=300):
 			for line in embeddings_file:
 				entry = line.split()
 				if entry[0] in vocab:
-					embeddings[vocab[entry[0]]] = np.asarray(entry[1:], dtype='float32')
+					embeddings[vocab[entry[0]]] = np.asarray(entry[1:], dtype=np.float32)
 	else:
 		print "Constructing Embedding Matrix for given Vocabulary using Word2Vec embeddings"
-		model=Word2Vec.load_word2vec_format(path,binary=True)
+		model = Word2Vec.load_word2vec_format(path,binary=True)
 		for key, idx in vocab.iteritems():
 			embeddings[idx] = model[key]
 		
@@ -72,7 +72,7 @@ def get_vgg16_features(coco_ids, path):
 	path: path to the data folder. Path should end in '/'
 	'''
 	print "Getting map from MS COCO IDs to VGG16 features"
-	maplist = open(path+'coco_vgg_IDMap.txt','r').read().splitlines()
+	maplist = open(path + 'coco_vgg_IDMap.txt','r').read().splitlines()
 	featmap = {}
 	for entry in maplist:
 		entries = entry.split()

@@ -175,7 +175,7 @@ def preprocess(path_to_data,
 
 		# tokenization of caption
 		tokens = nltk.word_tokenize(data[idx]['caption'])
-		sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]))
+		sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
 		
 		sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
 		
@@ -193,7 +193,7 @@ def preprocess(path_to_data,
 
 			# tokenization for the question in dialog
 			tokens = nltk.word_tokenize(dialog['question'])
-			sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]))
+			sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
 
 			sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
 			
@@ -207,8 +207,8 @@ def preprocess(path_to_data,
 			questions_tensor.append(sentence_matrix)
 
 			tokens = nltk.word_tokenize(dialog['answer'])
-			sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]))
-			token_indices = np.zeros((len(tokens) + 2, ), dtype=np.int64)
+			sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
+			token_indices = np.zeros((len(tokens) + 2, ), dtype=np.int16)
 
 			sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
 			token_indices[0] = word_idx_map["<sos>"]
