@@ -46,7 +46,7 @@ def param_init_lstm(params, prefix, nin, units):
 		init_weights(units, units, type_init='ortho')],
 		axis=1)
 	params[_concat(prefix, 'U')] = U
-	params[_concat(prefix, 'b')] = np.zeros((4 * units,)).astype('float32')
+	params[_concat(prefix, 'b')] = np.zeros((4 * units,), dtype=np.float32)
 	
 	return params
 
@@ -66,7 +66,7 @@ def lstm_layer(tparams, state_below,
 	if state_below.ndim == 3:
 		n_samples = state_below.shape[1]
 	else:
-		n_samples=1
+		n_samples = 1
 
 	dim = tparams[_concat(prefix,'U')].shape[0]
 	
