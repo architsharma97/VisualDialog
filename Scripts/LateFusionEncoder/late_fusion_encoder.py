@@ -216,7 +216,9 @@ def build_decoder(tparams, lfcode, max_steps):
 									outputs_info=[init_token, init_h1, init_h2, memory_1, memory_2],
 									n_steps=max_steps)
 
-	soft_tokens, updates = theano.scan(_softmax, sequences=tokens[2])
+	tokens = T.as_tensor_variable(tokens[2])
+
+	soft_tokens, updates = theano.scan(_softmax, sequences=tokens)
 
 	return T.as_tensor_variable(soft_tokens)
 
@@ -235,7 +237,7 @@ pred = build_decoder(tparams, lfcode, ans.shape[0])
 
 print "Building cost function"
 # cost function
-cost = -(T.log(pred) * ans).sum()
+cost = (-T.log(pred) * ans).sum()
 
 inps = [img, que, his, ans]
 
@@ -249,7 +251,7 @@ grads = T.grad(cost, wrt=param_list)
 
 # computing norms
 f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
-f_weight_norm = theano.function([], [(v**2).sum() for k,v in tparams.iteritems()], profile=False)
+f_weight_norm = theano.function([], [(v**2).sum() for k, v in tparams.iteritems()], profile=False)
 
 # gradients are clipped beyond certain values
 g2 = 0.

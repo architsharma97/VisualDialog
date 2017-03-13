@@ -61,7 +61,7 @@ def lstm_layer(tparams, state_below,
 	state_below: timesteps x samples x embedding_size
 	'''
 	if n_steps is None:
-		n_steps=state_below.shape[0]
+		n_steps = state_below.shape[0]
 
 	if state_below.ndim == 3:
 		n_samples = state_below.shape[1]
@@ -103,7 +103,10 @@ def lstm_layer(tparams, state_below,
 		return h, c
 
 	lstm_state_below = T.dot(state_below, W) + b
-	
+	if state_below.ndim == 3:
+		lstm_state_below = lstm_state_below.reshape((state_below.shape[0], 
+													 state_below.shape[1], 
+													 -1))
 	# mainly for decoder
 	if one_step:
 		h, c = _step(lstm_state_below, init_state, init_memory)
