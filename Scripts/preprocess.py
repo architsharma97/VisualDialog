@@ -169,6 +169,7 @@ def preprocess(path_to_data,
 	else:
 		num_instances = len(data)
 
+	# validation answers will be computed separately
 	for idx in range(num_instances):
 		# image coco id extracted
 		image_ids[idx] = int(data[idx]['image_id'])
