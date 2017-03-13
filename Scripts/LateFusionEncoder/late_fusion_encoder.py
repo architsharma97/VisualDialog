@@ -311,7 +311,7 @@ for epoch in range(EPOCHS):
 			params[key] = val.get_value()
 
 		# numpy saving
-		np.savez(MODEL_DIR + 'LFE/lfe_'+str(epoch + 1)+'.npz', **params)
+		np.savez(MODEL_DIR + 'LFE/lfe_-1_lr=10-3_'+str(epoch + 1)+'.npz', **params)
 		print 'Done!'
 
 	print 'Completed Epoch ', epoch + 1 
