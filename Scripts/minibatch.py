@@ -1,4 +1,3 @@
-# NOTE: Remove <sos> and <eos> token when constructing history
 import numpy as np
 
 class data():
