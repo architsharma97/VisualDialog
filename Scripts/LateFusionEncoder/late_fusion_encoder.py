@@ -68,7 +68,7 @@ except:
 
 print "Preprocessing data"
 # preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False, reduced_instances=-1)
+image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False, reduced_instances=10)
 
 print 'Shape of image features: ', image_features.shape
 print 'Shape of questions_tensor: ', questions_tensor.shape
