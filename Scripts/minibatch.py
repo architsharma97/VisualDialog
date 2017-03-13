@@ -162,7 +162,7 @@ class data():
 				self.curr = [que_order_idx, self.curr[1], 0]
 			else:
 				self.curr = [0, self.curr[1] + 1, 0]
-				while self.qlen_order[self.curr[1]] not in self.que_by_tokens[self.curr[0]]:
+				while self.curr[1] < len(self.qlen_order) and self.qlen_order[self.curr[1]] not in self.que_by_tokens[self.curr[0]]:
 					self.curr[0] += 1
 		
 		# first pass to get maximum sizes of history and answers
