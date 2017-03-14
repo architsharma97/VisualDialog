@@ -29,7 +29,6 @@ else:
 	val = False
 
 print "Initializing constants"
-# constants
 DATA_DIR = '../../Data/'
 MODEL_DIR = '../../Models/'
 
@@ -385,21 +384,22 @@ else:
 
 			# extract ranking of correct option
 			scores = []
-			for option in answers_options[idx][i]:
+			for options_i, option in enumerate(answers_options[idx][i]):
 				score = (out[:len(option), :]*option).sum()/option.shape[0]
-				scores.append(score)
+				scores.append([score, options_i])
 				# print score
 			
+			scores.sort(key=lambda x: x[0])
 			cor = int(correct_options[idx][i])
-			rank = 1
 			
-			for score in scores:
-				if score > scores[cor]:
-					rank += 1
+			for r, pair in enumerate(scores):
+				if cor == pair[1]:
+					rank = r + 1
+			
 			if len(sys.argv) > 2:
 				rank_file.write(str(rank) + ',' + str(scores[cor]) + '\n')
 
-			print "Correct option's score:", scores[cor], 'at rank:', rank
+			print "Correct option's score:", scores[rank][0], 'at rank:', rank
 
 			# append question to history
 			hislen -= 1
@@ -417,5 +417,4 @@ else:
 
 			history[hislen: hislen + ans_end, :] = out[:ans_end, :]
 			hislen += ans_end
-
 		hislen = 0

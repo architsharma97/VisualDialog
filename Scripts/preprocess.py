@@ -137,6 +137,7 @@ def preprocess(path_to_data,
 		embeddings[1] = np.random.rand(1, embeddings.shape[1])
 
 		# normalizing embedding matrix
+		# altenate: just normalize the embeddings of <eos> and <sos>
 		for i in range(len(embeddings)):
 			l2_norm = ((embeddings[i, :]*embeddings[i, :]).sum())**0.5
 			if l2_norm > 0.5:
