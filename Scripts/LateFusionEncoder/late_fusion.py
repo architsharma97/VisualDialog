@@ -36,7 +36,7 @@ MODEL_DIR = '../../Models/'
 # VGG16 Specification
 IMAGE_DIM = 4096
 
-# LSTMs Specifications: H := QA-History+Caption Encoder, Q := Question Encoder 
+# LSTMs Specifications: H := QA-History+Captions Encoder, Q := Question Encoder 
 LSTM_H_OUT = 512
 LSTM_H_LAYERS = 2
 lstm_prefix_h = 'lstm_h'
@@ -60,7 +60,7 @@ MAX_TOKENS = 60
 GRAD_CLIP = 5.0
 
 # number of epochs
-EPOCHS = 1000
+EPOCHS = 100
 
 print "Loading embedding matrix"
 try:
@@ -82,7 +82,7 @@ except:
 	load_dict = False
 
 print "Preprocessing data"
-if len(sys.argv[1]) <=1:
+if len(sys.argv) <=1:
 	# preprocess the training data to get input matrices and tensors
 	image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, 
 																		   load_dict=load_dict, 
@@ -98,7 +98,9 @@ else:
 																		 load_dict=True,
 																		 load_embedding_data=True,
 																		 split='Val',
-																		 save_data=False)
+																		 save_data=False,
+																		 reduced_instances=-1)
+	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
 	print "Loading embedding matrix"
@@ -117,31 +119,36 @@ if len(sys.argv[1]) <=1:
 	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=256)
 	train_data.get_counts()
 
-def initialize():
+def initialize(address=None):
 	'''
 	Initialize the parameters for the late fusion encoder and decoder
+	address: location of parameters to be loaded. Default is to reinitialize.
 	'''
-	# Parameters for the model
-	params = OrderedDict()
-	global DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, \
-		lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, \
-		LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix
-	
-	# feedforward layer
-	params = param_init_fflayer(params, ff_prefix, FF_IN, FF_OUT)
+	if address is None:
+		# Parameters for the model
+		params = OrderedDict()
+		global DATA_DIR, IMAGE_DIM, LSTM_H_OUT, LSTM_H_LAYERS, lstm_prefix_h, \
+			lstm_prefix_q, LSTM_Q_LAYERS, LSTM_Q_OUT, FF_IN, \
+			LSTM_D, LSTM_D_LAYERS, lstm_prefix_d, EMBEDDINGS_DIM, FF_OUT, ff_prefix
+		
+		# feedforward layer
+		params = param_init_fflayer(params, ff_prefix, FF_IN, FF_OUT)
 
-	# lstm layers
-	# question encoding layers
-	params = param_init_lstm(params, _concat(lstm_prefix_q, 1), EMBEDDINGS_DIM, LSTM_Q_OUT)
-	params = param_init_lstm(params, _concat(lstm_prefix_q, 2), LSTM_Q_OUT, LSTM_Q_OUT)
+		# lstm layers
+		# question encoding layers
+		params = param_init_lstm(params, _concat(lstm_prefix_q, 1), EMBEDDINGS_DIM, LSTM_Q_OUT)
+		params = param_init_lstm(params, _concat(lstm_prefix_q, 2), LSTM_Q_OUT, LSTM_Q_OUT)
 
-	# history encoding layers
-	params = param_init_lstm(params, _concat(lstm_prefix_h, 1), EMBEDDINGS_DIM, LSTM_H_OUT)
-	params = param_init_lstm(params, _concat(lstm_prefix_h, 2), LSTM_H_OUT, LSTM_H_OUT)
+		# history encoding layers
+		params = param_init_lstm(params, _concat(lstm_prefix_h, 1), EMBEDDINGS_DIM, LSTM_H_OUT)
+		params = param_init_lstm(params, _concat(lstm_prefix_h, 2), LSTM_H_OUT, LSTM_H_OUT)
 
-	# decoding layers
-	params = param_init_lstm(params, _concat(lstm_prefix_d, 1), EMBEDDINGS_DIM, LSTM_D_OUT)
-	params = param_init_lstm(params, _concat(lstm_prefix_d, 2), LSTM_D_OUT, EMBEDDINGS_DIM)
+		# decoding layers
+		params = param_init_lstm(params, _concat(lstm_prefix_d, 1), EMBEDDINGS_DIM, LSTM_D_OUT)
+		params = param_init_lstm(params, _concat(lstm_prefix_d, 2), LSTM_D_OUT, EMBEDDINGS_DIM)
+
+	else:
+		params = load_obj(address)
 
 	# initialize theano shared variables for params
 	tparams = OrderedDict()
@@ -246,96 +253,151 @@ def build_decoder(tparams, lfcode, max_steps):
 
 	return T.as_tensor_variable(soft_tokens)
 
-print "Initializating parameters for model"
-tparams = initialize()
+# TRAINING
+if len(sys.argv) <=1:
+	print "Initializating parameters for model"
+	tparams = initialize()
 
-print "Building encoder for the model"
-img, que, his, lfcode = build_lfe(tparams)
+	print "Building encoder for the model"
+	img, que, his, lfcode = build_lfe(tparams)
 
-# answer tensor should be a binary tensor with 1's at the positions which needs to be included
-# timesteps x number of answers in minibatch x vocabulary size
-ans = T.tensor3('ans', dtype='int64')
+	# answer tensor should be a binary tensor with 1's at the positions which needs to be included
+	# timesteps x number of answers in minibatch x vocabulary size
+	ans = T.tensor3('ans', dtype='int64')
 
-print "Building decoder"
-pred = build_decoder(tparams, lfcode, ans.shape[0])
+	print "Building decoder"
+	pred = build_decoder(tparams, lfcode, ans.shape[0])
 
-print "Building cost function"
-# cost function
-cost = (-T.log(pred) * ans).sum()
+	print "Building cost function"
+	# cost function
+	cost = (-T.log(pred) * ans).sum()
 
-inps = [img, que, his, ans]
+	inps = [img, que, his, ans]
 
-print "Constructing graph"
-f_cost = theano.function(inps, cost, on_unused_input='ignore', profile=False)
-print "Done!"
+	print "Constructing graph"
+	f_cost = theano.function(inps, cost, on_unused_input='ignore', profile=False)
+	print "Done!"
 
-print "Computing gradients"
-param_list=[val for key, val in tparams.iteritems()]
-grads = T.grad(cost, wrt=param_list)
+	print "Computing gradients"
+	param_list=[val for key, val in tparams.iteritems()]
+	grads = T.grad(cost, wrt=param_list)
 
-# computing norms
-f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
-f_weight_norm = theano.function([], [(v**2).sum() for k, v in tparams.iteritems()], profile=False)
+	# computing norms
+	f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
+	f_weight_norm = theano.function([], [(v**2).sum() for k, v in tparams.iteritems()], profile=False)
 
-# gradients are clipped beyond certain values
-g2 = 0.
-for g in grads:
-	g2 += (g**2).sum()
-new_grads = []
-for g in grads:
-	new_grads.append(T.switch(g2 > (GRAD_CLIP**2),
-								g / T.sqrt(g2)*GRAD_CLIP, g))
-grads = new_grads
+	# gradients are clipped beyond certain values
+	g2 = 0.
+	for g in grads:
+		g2 += (g**2).sum()
+	new_grads = []
+	for g in grads:
+		new_grads.append(T.switch(g2 > (GRAD_CLIP**2),
+									g / T.sqrt(g2)*GRAD_CLIP, g))
+	grads = new_grads
 
-# learning rate
-lr = T.scalar(name='lr', dtype='float32')
+	# learning rate
+	lr = T.scalar(name='lr', dtype='float32')
 
-# gradients, update parameters
-print "Setting up optimizer"
-f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
+	# gradients, update parameters
+	print "Setting up optimizer"
+	f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
 
-# set learning rate before training
-lrate = 0.001
+	# set learning rate before training
+	lrate = 0.001
 
-# time and cost will be output to the text file in BugReports folder
-training_output = open('../../BugReports/lfe_train_output_-1_lr=10-3.txt','w')
+	# time and cost will be output to the text file in BugReports folder
+	training_output = open('../../BugReports/lfe_train_output_-1_lr=10-3.txt','w')
 
-for epoch in range(EPOCHS):
-	train_data.reset()
+	for epoch in range(EPOCHS):
+		train_data.reset()
 
-	print 'Epoch ', epoch + 1
-	epoch_cost = 0.0
-	epoch_start = time.time()
+		print 'Epoch ', epoch + 1
+		epoch_cost = 0.0
+		epoch_start = time.time()
 
-	for batch_idx in range(train_data.batches):
-		# ibatch, qbatch, hbatch, abatch = train_data.get_batch()
+		for batch_idx in range(train_data.batches):
+			# ibatch, qbatch, hbatch, abatch = train_data.get_batch()
 
-		# print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
+			# print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
+			
+			t_start = time.time()
+			# directly unfolds the tuple returned as arguments to the function
+			# reduces memory footprint
+			cost = f_grad_shared(*train_data.get_batch())
+			f_update(lrate)
+			td = time.time() - t_start
+
+			epoch_cost += cost
+			
+			if not batch_idx % 20:
+				training_output.write('Epoch: ' + str(epoch) + ', Batch ID: ' + str(batch_idx) + ', Cost: ' + str(cost) + ', Time: ' + str(td) + '\n')
+
+		print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
+		training_output.write('Epoch: ' + str(epoch + 1) + ', Cost: ' + str(epoch_cost) + ', Time: ' + str(time.time()-epoch_start) + '\n')
 		
-		t_start = time.time()
-		# directly unfolds the tuple returned as arguments to the function
-		# reduces memory footprint
-		cost = f_grad_shared(*train_data.get_batch())
-		f_update(lrate)
-		td = time.time() - t_start
+		if (epoch+1) % 5 == 0:
+			print 'Saving... '
 
-		epoch_cost += cost
-		
-		if not batch_idx % 20:
-			training_output.write('Epoch: ' + str(epoch) + ', Batch ID: ' + str(batch_idx) + ', Cost: ' + str(cost) + ', Time: ' + str(td) + '\n')
+			params = {}
+			for key, val in tparams.iteritems():
+				params[key] = val.get_value()
 
-	print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
-	training_output.write('Epoch: ' + str(epoch + 1) + ', Cost: ' + str(epoch_cost) + ', Time: ' + str(time.time()-epoch_start) + '\n')
-	
-	if (epoch+1) % 5 == 0:
-		print 'Saving... '
+			# numpy saving
+			np.savez(MODEL_DIR + 'LFE/lfe_-1_lr=10-3_'+str(epoch + 1)+'.npz', **params)
+			print 'Done!'
 
-		params = {}
-		for key, val in tparams.iteritems():
-			params[key] = val.get_value()
+		print 'Completed Epoch ', epoch + 1 
 
-		# numpy saving
-		np.savez(MODEL_DIR + 'LFE/lfe_-1_lr=10-3_'+str(epoch + 1)+'.npz', **params)
-		print 'Done!'
+# VALIDATION
+else:
+	print "Loading trained model"
+	tparams = initialize(sys.argv[1])
 
-	print 'Completed Epoch ', epoch + 1 
+	print "Building encoder for the model"
+	img, que, his, lfcode = build_lfe(tparams)
+
+	print "Building decoder"
+	pred = build_decoder(tparams, lfcode, MAX_TOKENS)
+
+	inps = [img, que, his]
+	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
+
+	history = np.zeros((300, EMBEDDINGS_DIM))
+	hislen = 0
+	ranks = []
+	for idx in range(image_features.shape[0]):
+		history[hislen: hislen + captions[idx].shape[0], :] = captions[idx]
+		hislen += captions.shape[0]
+
+		# 10 questions per image
+		for i in range(10):
+			out = f(image_features[idx], questions[idx][i], history[:hislen, :])
+			out_idx = np.argmax(out, axis=1)
+			out = np.transpose(embed)[out_idx]
+
+			# create ranking
+			scores = []
+			for option in answers_options[idx][i]:
+				scores.append((out[:len(option), :]*option).sum()/option.shape[0])
+			cor = int(correct_options[idx][i])
+			rank = 1
+			for score in scores:
+				if score > scores[cor]:
+					rank += 1
+			ranks.append(rank)
+
+			# append question to history
+			hislen -= 1
+			history[hislen : hislen + questions[idx][i].shape[0] - 2, :] = questions[idx][i][1:-1, :]
+			hislen += questions[idx][i].shape[0] - 2
+
+			# append answer to history. Find <eos> token in the generated answer, if any.
+			ans_end = 60
+			for idx in out_idx:
+				if idx == idx_word_map['<eos>']:
+					ans_end = idx + 1
+					break
+
+			history[hislen: hislen + ans_end, :] = out[:ans_end, :]
+			hislen += ans_end

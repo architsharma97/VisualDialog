@@ -23,7 +23,7 @@ def preprocess(path_to_data,
 	
 	'''
 	path_to_data: path from function call to the Data folder
-	load_*: load previously created dictionaries/embeddings. Automatically disbles save_*. Should be True for Validation/Testing.
+	load_*: load previously created dictionaries/embeddings. Automatically disables save_*. Should be True for Validation/Testing.
 	save_*: Save the embeddings/dictionaries created
 	split: the data which is being processed. Can be 'Train', 'Val', 'Test'
 	reduced_instances: for testing the model, reduce the training set. -1 implies the complete training set. Otherwise, pass the number of images
