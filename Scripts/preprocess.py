@@ -129,14 +129,14 @@ def preprocess(path_to_data,
 		# embeddings
 		embeddings = get_embeddings(word_idx_map, path_to_data + "Embeddings/glove.6B.300d.txt")
 
-		# Since, the embeddings are pre-trained, both <eos> and <unk> map onto origin
-		
-		# To differentiate, the embedding for <sos> are set to random value
+		# Since, the embeddings are pre-trained, both <eos>, <sos> and <unk> map onto origin
+		# To differentiate, the embedding for <sos> and <eos> are set to random value
 		embeddings[0] = np.random.rand(1, embeddings.shape[1])
-		
+		embeddings[0] = embeddings[0]/(embeddings[0]*embeddings[0]).sum()
+
 		# embeddings for <eos> symbol
 		embeddings[1] = np.random.rand(1, embeddings.shape[1])
-		
+
 		if save_embedding_matrix:
 			print "Saving Embedding Matrix"
 			np.save(path_to_data + "../Models/embedding_matrix.npy", embeddings)
@@ -145,57 +145,38 @@ def preprocess(path_to_data,
 
 	print "Constructing data for " + str(split) + " split"
 	
-	# all images have 10 question-answer pairs in sequence
-	image_ids = np.zeros((len(data),))
-	
-	# saves questions and answers in a tensor 
-	# questions_tensor=np.zeros((len(data)*10,max_len_question, embeddings.shape[1]))
-	# caption is kept as the first answer
-	# answers_tensor=np.zeros((len(data)*11, max_len_answer, embeddings.shape[1]))
-
-	# lists the answers and questions matrices
-	answers_tensor = []
-	questions_tensor = []
-	
-	# answers_tensor contains the encoded form, answers_matrix only contains the indices
-	answers_matrix = []
-
-	# add sos and eos symbol always
-	# check for unknown symbols
-	if not reduced_instances == -1:
-		num_instances = reduced_instances
-		# update the length of image ids
-		image_ids = image_ids[:num_instances]
-	else:
-		num_instances = len(data)
-
-	# validation answers will be computed separately
-	for idx in range(num_instances):
-		# image coco id extracted
-		image_ids[idx] = int(data[idx]['image_id'])
-
-		# tokenization of caption
-		tokens = nltk.word_tokenize(data[idx]['caption'])
-		sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
+	if split == 'Train':
+		# all images have 10 question-answer pairs in sequence
+		image_ids = np.zeros((len(data),), dtype=np.int64)
 		
-		sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
+		# # saves questions and answers in a tensor 
+		# questions_tensor=np.zeros((len(data) * 10, max_len_question, embeddings.shape[1]))
+		# # caption is kept as the first answer
+		# answers_tensor=np.zeros((len(data) * 11, max_len_answer, embeddings.shape[1]))
+
+		# lists the answers and questions matrices
+		answers_tensor = []
+		questions_tensor = []
 		
-		for i, token in enumerate(tokens):
-			if token in word_idx_map:
-				sentence_matrix[i + 1,:] = embeddings[word_idx_map[token]]
-			else:
-				sentence_matrix[i + 1,:] = embeddings[word_idx_map["<unk>"]]
-			
-		sentence_matrix[len(tokens) + 1,:] = embeddings[word_idx_map["<eos>"]]
-		answers_tensor.append(sentence_matrix)
+		# answers_tensor contains the encoded form, answers_matrix only contains the indices
+		answers_matrix = []
 
-		# tokenization for each dialog
-		for num, dialog in enumerate(data[idx]['dialog']):
+		if not reduced_instances == -1:
+			num_instances = reduced_instances
+			# update the length of image ids
+			image_ids = image_ids[:num_instances]
+		else:
+			num_instances = len(data)
 
-			# tokenization for the question in dialog
-			tokens = nltk.word_tokenize(dialog['question'])
+		# validation answers will be computed separately
+		for idx in range(num_instances):
+			# image coco id extracted
+			image_ids[idx] = int(data[idx]['image_id'])
+
+			# tokenization of caption
+			tokens = nltk.word_tokenize(data[idx]['caption'])
 			sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
-
+			
 			sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
 			
 			for i, token in enumerate(tokens):
@@ -203,35 +184,139 @@ def preprocess(path_to_data,
 					sentence_matrix[i + 1,:] = embeddings[word_idx_map[token]]
 				else:
 					sentence_matrix[i + 1,:] = embeddings[word_idx_map["<unk>"]]
-
+				
 			sentence_matrix[len(tokens) + 1,:] = embeddings[word_idx_map["<eos>"]]
-			questions_tensor.append(sentence_matrix)
-
-			tokens = nltk.word_tokenize(dialog['answer'])
-			sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
-			token_indices = np.zeros((len(tokens) + 2, ), dtype=np.int16)
-
-			sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
-			token_indices[0] = word_idx_map["<sos>"]
-
-			for i, token in enumerate(tokens):
-				if token in word_idx_map:
-					sentence_matrix[i + 1,:] = embeddings[word_idx_map[token]]
-					token_indices[i + 1] = word_idx_map[token]
-				else:
-					sentence_matrix[i + 1,:] = embeddings[word_idx_map["<unk>"]]
-					token_indices[i + 1] = word_idx_map["<unk>"]
-
-			sentence_matrix[len(tokens) + 1,:] = embeddings[word_idx_map["<eos>"]]
-			token_indices[len(tokens) + 1] = word_idx_map["<eos>"]
 			answers_tensor.append(sentence_matrix)
-			answers_matrix.append(token_indices[1:])
+
+			# tokenization for each dialog
+			for num, dialog in enumerate(data[idx]['dialog']):
+
+				# tokenization for the question in dialog
+				tokens = nltk.word_tokenize(dialog['question'])
+				sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
+
+				sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
+				
+				for i, token in enumerate(tokens):
+					if token in word_idx_map:
+						sentence_matrix[i + 1,:] = embeddings[word_idx_map[token]]
+					else:
+						sentence_matrix[i + 1,:] = embeddings[word_idx_map["<unk>"]]
+
+				sentence_matrix[len(tokens) + 1,:] = embeddings[word_idx_map["<eos>"]]
+				questions_tensor.append(sentence_matrix)
+
+				tokens = nltk.word_tokenize(dialog['answer'])
+				sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
+				token_indices = np.zeros((len(tokens) + 2, ), dtype=np.int16)
+
+				sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
+				token_indices[0] = word_idx_map["<sos>"]
+
+				for i, token in enumerate(tokens):
+					if token in word_idx_map:
+						sentence_matrix[i + 1,:] = embeddings[word_idx_map[token]]
+						token_indices[i + 1] = word_idx_map[token]
+					else:
+						sentence_matrix[i + 1,:] = embeddings[word_idx_map["<unk>"]]
+						token_indices[i + 1] = word_idx_map["<unk>"]
+
+				sentence_matrix[len(tokens) + 1,:] = embeddings[word_idx_map["<eos>"]]
+				token_indices[len(tokens) + 1] = word_idx_map["<eos>"]
+				answers_tensor.append(sentence_matrix)
+				answers_matrix.append(token_indices[1:])
+				
+		# gets image features using the coco_ids
+		image_features = get_vgg16_features(image_ids, path_to_data)
+		questions_tensor = np.asarray(questions_tensor)
+		answers_tensor = np.asarray(answers_tensor)
+		answers_matrix = np.asarray(answers_matrix)
+	
+	elif split == 'Val':
+		'''
+		Hierarchy will be followed in construction of data for Validation data set.
+		All questions, correct options will be grouped according to the image they belong to.
+		All answer options will be will be grouped according to questions they belong to.
+		'''
+		image_ids = np.zeros((len(data),), dtype=np.int64)
+		captions = []
+		questions = []
+		answer_options = []
+		correct_options = []
+
+		if not reduced_instances == -1:
+			num_instances = reduced_instances
+			# update the length of image ids
+			image_ids = image_ids[:num_instances]
+		else:
+			num_instances = len(data)
+
+		for idx in range(num_instances):
+			# image id
+			image_ids[idx] = int(data[idx]['image_id'])
+
+			# caption
+			tokens = nltk.word_tokenize(data[idx]['caption'])
+			sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
 			
-	# gets image features using the coco_ids
-	image_features = get_vgg16_features(image_ids, path_to_data)
-	questions_tensor = np.asarray(questions_tensor)
-	answers_tensor = np.asarray(answers_tensor)
-	answers_matrix = np.asarray(answers_matrix)
+			sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
+			
+			for i, token in enumerate(tokens):
+				if token in word_idx_map:
+					sentence_matrix[i + 1,:] = embeddings[word_idx_map[token]]
+				else:
+					sentence_matrix[i + 1,:] = embeddings[word_idx_map["<unk>"]]
+				
+			sentence_matrix[len(tokens) + 1,:] = embeddings[word_idx_map["<eos>"]]
+			captions.append(sentence_matrix)
+
+			questions_for_this_image = []
+			answer_options_for_this_image = []
+			correct_options_for_this_image = []
+
+			# questions, correct options, and options for each question
+			for dialog in data[idx]['dialog']:
+				# questions
+				tokens = nltk.word_tokenize(dialog['question'])
+				sentence_matrix = np.zeros((len(tokens) + 2, embeddings.shape[1]), dtype=np.float32)
+
+				sentence_matrix[0, :] = embeddings[word_idx_map["<sos>"]]
+				
+				for i, token in enumerate(tokens):
+					if token in word_idx_map:
+						sentence_matrix[i + 1,:] = embeddings[word_idx_map[token]]
+					else:
+						sentence_matrix[i + 1,:] = embeddings[word_idx_map["<unk>"]]
+
+				sentence_matrix[len(tokens) + 1,:] = embeddings[word_idx_map["<eos>"]]
+				questions_for_this_image.append(sentence_matrix)
+
+				# correct option
+				correct_options_for_this_image.append(int(dialog['gt_index']))
+
+				# options
+				answer_options_for_this_question = []
+				for option in dialog['options']:
+					tokens = nltk.word_tokenize(option)
+					sentence_matrix = np.zeros((len(tokens) + 1, embeddings.shape[1]), dtype=np.float32)
+
+					for i, token in enumerate(tokens):
+						if token in word_idx_map:
+							sentence_matrix[i + 1, :] = embeddings[word_idx_map[token]]
+						else:
+							sentence_matrix[i + 1, :] = embeddings[word_idx_map['<unk>']]
+
+					sentence_matrix[-1, :] = embeddings[word_idx_map['<eos>']]
+					answer_options_for_this_question.append(sentence_matrix)
+
+				# appending the options 
+				answer_options_for_this_image.append(answer_options_for_this_question)
+
+			questions.append(questions_for_this_image)
+			answer_options.append(answer_options_for_this_image)
+			correct_options.append(correct_options_for_this_image)
+
+		image_features = get_vgg16_features(image_ids, path_to_data)
 
 	if save_data:
 		print "Saving data for " + split + " split"
@@ -255,4 +340,8 @@ def preprocess(path_to_data,
 			np.savez(path_to_data + "Test/answers_matrix.npy", answers_matrix)
 	
 	else:
-		return image_features, questions_tensor, answers_tensor, answers_matrix
+		if split == 'Train':
+			return image_features, questions_tensor, answers_tensor, answers_matrix
+		
+		elif split == 'Val':
+			return image_features, captions, questions, answer_options, correct_options

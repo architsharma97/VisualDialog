@@ -14,6 +14,20 @@ import minibatch
 from collections import OrderedDict
 import time
 
+'''
+Script takes the following arguments if being used for validation
+No arguments need to be passed if the script is used for training
+
+1) Location of the .npz if the model is to be trained
+'''
+
+if len(sys.argv) > 1:
+	print "Running in validation mode"
+	val = True
+else:
+	print "Running in train mode"
+	val = False
+
 print "Initializing constants"
 # constants
 DATA_DIR = '../../Data/'
@@ -40,6 +54,7 @@ ff_prefix = 'ff'
 LSTM_D_OUT = 512
 LSTM_D_LAYERS = 2
 lstm_prefix_d = 'lstm_d'
+MAX_TOKENS = 60
 
 # maximum gradient allowed in a step
 GRAD_CLIP = 5.0
@@ -67,13 +82,23 @@ except:
 	load_dict = False
 
 print "Preprocessing data"
-# preprocess the training data to get input matrices and tensors
-image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, load_dict=load_dict, load_embedding_matrix=load_embedding_data, save_data=False, reduced_instances=-1)
-
-print 'Shape of image features: ', image_features.shape
-print 'Shape of questions_tensor: ', questions_tensor.shape
-print 'Shape of answers_tensor: ', answers_tensor.shape
-print 'Shape of answers_tokens_idx: ', answers_tokens_idx.shape
+if len(sys.argv[1]) <=1:
+	# preprocess the training data to get input matrices and tensors
+	image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, 
+																		   load_dict=load_dict, 
+																		   load_embedding_matrix=load_embedding_data, 
+																		   save_data=False, 
+																		   reduced_instances=-1)
+	print 'Shape of image features: ', image_features.shape
+	print 'Shape of questions_tensor: ', questions_tensor.shape
+	print 'Shape of answers_tensor: ', answers_tensor.shape
+	print 'Shape of answers_tokens_idx: ', answers_tokens_idx.shape
+else:
+	image_features, captions, questions, answers_options, correct_options = preprocess(DATA_DIR,
+																		 load_dict=True,
+																		 load_embedding_data=True,
+																		 split='Val',
+																		 save_data=False)
 
 if not load_embedding_data:
 	print "Loading embedding matrix"
@@ -87,11 +112,10 @@ if not load_dict:
 
 EMBEDDINGS_DIM = embed.shape[0]
 
-print "Testing minibatches"
-train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=256)
-
-# get token counts
-train_data.get_counts()
+if len(sys.argv[1]) <=1:
+	print "Preparing minibatches"
+	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=256)
+	train_data.get_counts()
 
 def initialize():
 	'''
