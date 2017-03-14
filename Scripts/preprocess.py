@@ -138,7 +138,7 @@ def preprocess(path_to_data,
 
 		# normalizing embedding matrix
 		for i in range(len(embeddings)):
-			l2_norm = (embeddings[i, :]*embeddings[i, :]).sum()
+			l2_norm = ((embeddings[i, :]*embeddings[i, :]).sum())**0.5
 			if l2_norm > 0.5:
 				embeddings[i, :] = embeddings[i, :]/l2_norm
 

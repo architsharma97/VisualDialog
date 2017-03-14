@@ -72,7 +72,7 @@ class data():
 		# 2) The number of tokens in the questions
 		print "Counts for tokens in answers"
 		for i in range(10):
-			print "For questions asked at position " + str(i + 1)
+			print "for questions asked at position " + str(i + 1)
 			for k,v in self.que_by_ans_tokens[i].iteritems():
 				print '%d : %d' %(k, len(v))
 		
@@ -191,8 +191,8 @@ class data():
 
 			# construction of answer
 			cur_ans = self.ans_tokens[idx]
-			for token_idx in cur_ans:
-				abatch[j, i, token_idx] = 1
+			for j in range(len(cur_ans)):
+				abatch[j, i, cur_ans[j]] = 1
 
 			# contruction of history batch
 			cur_len = self.ans[(idx/10)*11].shape[0] - 1
@@ -210,5 +210,5 @@ class data():
 				hbatch[cur_len:cur_len+aclen,i, :] = self.ans[ans_idx][1:-1, :]
 				cur_len += aclen
 			hbatch[cur_len, i, :] = self.eos
-			
+
 		return ibatch, qbatch, hbatch, abatch

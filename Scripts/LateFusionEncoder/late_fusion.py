@@ -88,7 +88,7 @@ if len(sys.argv) <=1:
 																		   load_dict=load_dict, 
 																		   load_embedding_matrix=load_embedding_data, 
 																		   save_data=False, 
-																		   reduced_instances=1)
+																		   reduced_instances=10)
 	print 'Shape of image features: ', image_features.shape
 	print 'Shape of questions_tensor: ', questions_tensor.shape
 	print 'Shape of answers_tensor: ', answers_tensor.shape
@@ -114,7 +114,7 @@ if not load_dict:
 
 EMBEDDINGS_DIM = embed.shape[0]
 
-if len(sys.argv[1]) <=1:
+if len(sys.argv) <=1:
 	print "Preparing minibatches"
 	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=128)
 	train_data.get_counts()
@@ -364,6 +364,7 @@ else:
 	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
 
 	history = np.zeros((300, EMBEDDINGS_DIM), dtype=np.float32)
+	hislen = 0
 	if len(sys.argv) > 2:
 		rank_file = open(sys.argv[2], 'w')
 
