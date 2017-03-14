@@ -99,7 +99,7 @@ else:
 																		 load_embedding_data=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=-1)
+																		 reduced_instances=10)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
@@ -366,6 +366,9 @@ else:
 	history = np.zeros((300, EMBEDDINGS_DIM))
 	hislen = 0
 	ranks = []
+	if len(sys.argv) > 2:
+		rank_file = open(sys.argv[2], 'w')
+
 	for idx in range(image_features.shape[0]):
 		history[hislen: hislen + captions[idx].shape[0], :] = captions[idx]
 		hislen += captions.shape[0]
@@ -386,6 +389,8 @@ else:
 				if score > scores[cor]:
 					rank += 1
 			ranks.append(rank)
+			if len(sys.argv) > 2:
+				rank_file.write(str(rank) + '\n')
 
 			# append question to history
 			hislen -= 1
@@ -395,9 +400,11 @@ else:
 			# append answer to history. Find <eos> token in the generated answer, if any.
 			ans_end = 60
 			for idx in out_idx:
-				if idx == idx_word_map['<eos>']:
+				if idx == word_idx_map['<eos>']:
 					ans_end = idx + 1
+					print ' '
 					break
+				print idx_word_map[idx],
 
 			history[hislen: hislen + ans_end, :] = out[:ans_end, :]
 			hislen += ans_end
