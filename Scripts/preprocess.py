@@ -132,10 +132,15 @@ def preprocess(path_to_data,
 		# Since, the embeddings are pre-trained, both <eos>, <sos> and <unk> map onto origin
 		# To differentiate, the embedding for <sos> and <eos> are set to random value
 		embeddings[0] = np.random.rand(1, embeddings.shape[1])
-		embeddings[0] = embeddings[0]/(embeddings[0]*embeddings[0]).sum()
-
+		
 		# embeddings for <eos> symbol
 		embeddings[1] = np.random.rand(1, embeddings.shape[1])
+
+		# normalizing embedding matrix
+		for i in range(len(embeddings)):
+			l2_norm = (embeddings[i, :]*embeddings[i, :]).sum()
+			if l2_norm > 0.5:
+				embeddings[i, :] = embeddings[i, :]/l2_norm
 
 		if save_embedding_matrix:
 			print "Saving Embedding Matrix"

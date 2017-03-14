@@ -99,7 +99,7 @@ else:
 																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=10)
+																		 reduced_instances=1)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
@@ -116,7 +116,7 @@ EMBEDDINGS_DIM = embed.shape[0]
 
 if len(sys.argv[1]) <=1:
 	print "Preparing minibatches"
-	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=256)
+	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=128)
 	train_data.get_counts()
 
 def initialize(address=None):
@@ -364,8 +364,6 @@ else:
 	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
 
 	history = np.zeros((300, EMBEDDINGS_DIM), dtype=np.float32)
-	hislen = 0
-	ranks = []
 	if len(sys.argv) > 2:
 		rank_file = open(sys.argv[2], 'w')
 
@@ -376,25 +374,30 @@ else:
 
 		# 10 questions per image
 		for i in range(10):
-			out = f(image_features[idx, :].reshape((1,-1)), 
+			out = f(image_features[idx, :].reshape((1, -1)), 
 					questions[idx][i].reshape((questions[idx][i].shape[0], 1, questions[idx][i].shape[1])), 
 					history[:hislen, :].reshape((hislen, 1, EMBEDDINGS_DIM)))
 			out = out.reshape((out.shape[0], out.shape[2]))
 			out_idx = np.argmax(out, axis=1)
 			out = np.transpose(embed)[out_idx]
 
-			# create ranking
+			# extract ranking of correct option
 			scores = []
 			for option in answers_options[idx][i]:
-				scores.append((out[:len(option), :]*option).sum()/option.shape[0])
+				score = (out[:len(option), :]*option).sum()/option.shape[0]
+				scores.append(score)
+				# print score
+			
 			cor = int(correct_options[idx][i])
 			rank = 1
+			
 			for score in scores:
 				if score > scores[cor]:
 					rank += 1
-			ranks.append(rank)
 			if len(sys.argv) > 2:
-				rank_file.write(str(rank) + '\n')
+				rank_file.write(str(rank) + ',' + str(scores[cor]) + '\n')
+
+			print "Correct option's score:", scores[cor], 'at rank:', rank
 
 			# append question to history
 			hislen -= 1
@@ -402,7 +405,7 @@ else:
 			hislen += questions[idx][i].shape[0] - 2
 
 			# append answer to history. Find <eos> token in the generated answer, if any.
-			ans_end = 60
+			ans_end = MAX_TOKENS
 			for j in out_idx:
 				if j == word_idx_map['<eos>']:
 					ans_end = j + 1
