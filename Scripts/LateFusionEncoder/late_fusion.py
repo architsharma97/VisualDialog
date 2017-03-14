@@ -88,7 +88,7 @@ if len(sys.argv) <=1:
 																		   load_dict=load_dict, 
 																		   load_embedding_matrix=load_embedding_data, 
 																		   save_data=False, 
-																		   reduced_instances=10)
+																		   reduced_instances=-1)
 	print 'Shape of image features: ', image_features.shape
 	print 'Shape of questions_tensor: ', questions_tensor.shape
 	print 'Shape of answers_tensor: ', answers_tensor.shape
@@ -116,7 +116,7 @@ EMBEDDINGS_DIM = embed.shape[0]
 
 if len(sys.argv) <=1:
 	print "Preparing minibatches"
-	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=128)
+	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=256)
 	train_data.get_counts()
 
 def initialize(address=None):
