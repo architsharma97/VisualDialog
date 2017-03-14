@@ -79,7 +79,7 @@ def get_vgg16_features(coco_ids, path):
 		featmap[int(entries[0])] = int(entries[1])
 
 	print "Building feature matrix for given images"
-	feature_matrix = np.zeros((len(coco_ids),4096))
+	feature_matrix = np.zeros((len(coco_ids), 4096), dtype=np.float32)
 	VGGfeatures = np.transpose(scipy.io.loadmat(path + 'vgg_feats.mat')['feats'])
 
 	for count, idx in enumerate(coco_ids):

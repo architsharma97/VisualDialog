@@ -96,7 +96,7 @@ if len(sys.argv) <=1:
 else:
 	image_features, captions, questions, answers_options, correct_options = preprocess(DATA_DIR,
 																		 load_dict=True,
-																		 load_embedding_data=True,
+																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
 																		 reduced_instances=10)
@@ -148,7 +148,7 @@ def initialize(address=None):
 		params = param_init_lstm(params, _concat(lstm_prefix_d, 2), LSTM_D_OUT, EMBEDDINGS_DIM)
 
 	else:
-		params = load_obj(address)
+		params = np.load(address)
 
 	# initialize theano shared variables for params
 	tparams = OrderedDict()
@@ -363,19 +363,23 @@ else:
 	inps = [img, que, his]
 	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
 
-	history = np.zeros((300, EMBEDDINGS_DIM))
+	history = np.zeros((300, EMBEDDINGS_DIM), dtype=np.float32)
 	hislen = 0
 	ranks = []
 	if len(sys.argv) > 2:
 		rank_file = open(sys.argv[2], 'w')
 
 	for idx in range(image_features.shape[0]):
+		print "Image: ", idx + 1
 		history[hislen: hislen + captions[idx].shape[0], :] = captions[idx]
-		hislen += captions.shape[0]
+		hislen += captions[idx].shape[0]
 
 		# 10 questions per image
 		for i in range(10):
-			out = f(image_features[idx], questions[idx][i], history[:hislen, :])
+			out = f(image_features[idx, :].reshape((1,-1)), 
+					questions[idx][i].reshape((questions[idx][i].shape[0], 1, questions[idx][i].shape[1])), 
+					history[:hislen, :].reshape((hislen, 1, EMBEDDINGS_DIM)))
+			out = out.reshape((out.shape[0], out.shape[2]))
 			out_idx = np.argmax(out, axis=1)
 			out = np.transpose(embed)[out_idx]
 
@@ -399,12 +403,14 @@ else:
 
 			# append answer to history. Find <eos> token in the generated answer, if any.
 			ans_end = 60
-			for idx in out_idx:
-				if idx == word_idx_map['<eos>']:
-					ans_end = idx + 1
-					print ' '
+			for j in out_idx:
+				if j == word_idx_map['<eos>']:
+					ans_end = j + 1
+					print '<eos>'
 					break
-				print idx_word_map[idx],
+				print idx_word_map[j],
 
 			history[hislen: hislen + ans_end, :] = out[:ans_end, :]
 			hislen += ans_end
+
+		hislen = 0
