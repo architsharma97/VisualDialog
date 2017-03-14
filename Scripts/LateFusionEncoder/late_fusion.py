@@ -88,7 +88,7 @@ if len(sys.argv) <=1:
 																		   load_dict=load_dict, 
 																		   load_embedding_matrix=load_embedding_data, 
 																		   save_data=False, 
-																		   reduced_instances=-1)
+																		   reduced_instances=1)
 	print 'Shape of image features: ', image_features.shape
 	print 'Shape of questions_tensor: ', questions_tensor.shape
 	print 'Shape of answers_tensor: ', answers_tensor.shape
@@ -374,6 +374,7 @@ else:
 
 		# 10 questions per image
 		for i in range(10):
+			# get the string output and convert it into embeddings
 			out = f(image_features[idx, :].reshape((1, -1)), 
 					questions[idx][i].reshape((questions[idx][i].shape[0], 1, questions[idx][i].shape[1])), 
 					history[:hislen, :].reshape((hislen, 1, EMBEDDINGS_DIM)))
