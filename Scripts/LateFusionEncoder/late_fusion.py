@@ -336,7 +336,7 @@ if len(sys.argv) <=1:
 		print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
 		training_output.write('Epoch: ' + str(epoch + 1) + ', Cost: ' + str(epoch_cost) + ', Time: ' + str(time.time()-epoch_start) + '\n')
 		
-		if (epoch+1) % 5 == 0:
+		if (epoch + 1) % 5 == 0:
 			print 'Saving... '
 
 			params = {}
@@ -363,13 +363,13 @@ else:
 	inps = [img, que, his]
 	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
 
-	history = np.zeros((300, EMBEDDINGS_DIM), dtype=np.float32)
+	history = np.zeros((1000, EMBEDDINGS_DIM), dtype=np.float32)
+	hislen = 0
 	if len(sys.argv) > 2:
 		rank_file = open(sys.argv[2], 'w')
 
 	for idx in range(image_features.shape[0]):
 		print "Image: ", idx + 1
-		hislen = 0
 		history[hislen: hislen + captions[idx].shape[0], :] = captions[idx]
 		hislen += captions[idx].shape[0]
 
@@ -390,17 +390,18 @@ else:
 				scores.append([score, options_i])
 				# print score
 			
-			scores.sort(key=lambda x: x[0])
+			scores.sort(key=lambda x: x[0], reverse=True)
 			cor = int(correct_options[idx][i])
 			
 			for r, pair in enumerate(scores):
 				if cor == pair[1]:
 					rank = r + 1
+					break
 			
 			if len(sys.argv) > 2:
 				rank_file.write(str(rank) + ',' + str(scores[cor]) + '\n')
 
-			print "Correct option's score:", scores[rank][0], 'at rank:', rank
+			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
 
 			# append question to history
 			hislen -= 1
@@ -418,3 +419,4 @@ else:
 
 			history[hislen: hislen + ans_end, :] = out[:ans_end, :]
 			hislen += ans_end
+		hislen = 0
