@@ -115,7 +115,7 @@ EMBEDDINGS_DIM = embed.shape[0]
 
 if len(sys.argv) <=1:
 	print "Preparing minibatches"
-	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=256)
+	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=128)
 	train_data.get_counts()
 
 def initialize(address=None):
@@ -306,7 +306,7 @@ if len(sys.argv) <=1:
 	lrate = 0.001
 
 	# time and cost will be output to the text file in BugReports folder
-	training_output = open('../../BugReports/lfe_train_output_-1_lr=10-3.txt','w')
+	training_output = open('../../BugReports/lfe_train_output_-1_10-3.txt','w')
 
 	for epoch in range(EPOCHS):
 		train_data.reset()
@@ -343,7 +343,7 @@ if len(sys.argv) <=1:
 				params[key] = val.get_value()
 
 			# numpy saving
-			np.savez(MODEL_DIR + 'LFE/lfe_-1_lr=10-3_'+str(epoch + 1)+'.npz', **params)
+			np.savez(MODEL_DIR + 'LFE/lfe_-1_10-3_'+str(epoch + 1)+'.npz', **params)
 			print 'Done!'
 
 		print 'Completed Epoch ', epoch + 1 
