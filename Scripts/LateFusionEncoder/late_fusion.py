@@ -16,9 +16,10 @@ import time
 
 '''
 Script takes the following arguments if being used for validation
-No arguments need to be passed if the script is used for training
+No arguments should be passed if the script is used for training
 
 1) Location of the .npz if the model is to be trained
+2) Location where the ranks for the correct answer are stored for all validation data
 '''
 
 if len(sys.argv) > 1:
@@ -363,12 +364,12 @@ else:
 	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
 
 	history = np.zeros((300, EMBEDDINGS_DIM), dtype=np.float32)
-	hislen = 0
 	if len(sys.argv) > 2:
 		rank_file = open(sys.argv[2], 'w')
 
 	for idx in range(image_features.shape[0]):
 		print "Image: ", idx + 1
+		hislen = 0
 		history[hislen: hislen + captions[idx].shape[0], :] = captions[idx]
 		hislen += captions[idx].shape[0]
 
@@ -417,4 +418,3 @@ else:
 
 			history[hislen: hislen + ans_end, :] = out[:ans_end, :]
 			hislen += ans_end
-		hislen = 0
