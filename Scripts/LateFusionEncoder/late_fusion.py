@@ -22,7 +22,7 @@ No arguments should be passed if the script is used for training
 2) Location where the ranks for the correct answer are stored for all validation data
 '''
 
-if len(sys.argv) > 1:
+if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
 	print "Running in validation mode"
 	val = True
 else:
@@ -82,7 +82,7 @@ except:
 	load_dict = False
 
 print "Preprocessing data"
-if len(sys.argv) <=1:
+if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	# preprocess the training data to get input matrices and tensors
 	image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, 
 																		   load_dict=load_dict, 
@@ -99,7 +99,7 @@ else:
 																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=1)
+																		 reduced_instances=3)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
@@ -114,7 +114,7 @@ if not load_dict:
 
 EMBEDDINGS_DIM = embed.shape[0]
 
-if len(sys.argv) <=1:
+if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	print "Preparing minibatches"
 	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=128)
 	train_data.get_counts()
@@ -253,11 +253,14 @@ def build_decoder(tparams, lfcode, max_steps):
 
 	return T.as_tensor_variable(soft_tokens)
 
-# TRAINING
-if len(sys.argv) <=1:
+if len(sys.argv) > 1:
 	print "Initializating parameters for model"
+	tparams = initialize(sys.argv[2])
+else:
 	tparams = initialize()
 
+# TRAINING
+if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	print "Building encoder for the model"
 	img, que, his, lfcode = build_lfe(tparams)
 
@@ -351,9 +354,6 @@ if len(sys.argv) <=1:
 
 # VALIDATION
 else:
-	print "Loading trained model"
-	tparams = initialize(sys.argv[1])
-
 	print "Building encoder for the model"
 	img, que, his, lfcode = build_lfe(tparams)
 
