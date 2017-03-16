@@ -16,10 +16,10 @@ import time
 
 '''
 Script takes the following arguments if being used for validation
-No arguments should be passed if the script is used for training
-
-1) Location of the .npz if the model is to be trained
-2) Location where the ranks for the correct answer are stored for all validation data
+No arguments should be passed if the script is used for training from random initialization
+1) Train (0) or Validate (1)
+2) Location of the weights (.npz)
+3) Location where the ranks for the correct answer are stored for all validation data (optional, recommended) (not to be given with training)
 '''
 
 if len(sys.argv) > 1 and int(sys.argv[1]) == 1:
@@ -310,9 +310,13 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	lrate = 0.001
 
 	# time and cost will be output to the text file in BugReports folder
-	training_output = open('../../BugReports/lfe_train_output_-1_10-3.txt','w')
+	training_output = open('../../BugReports/lfe_train_output_-1_10-3.txt','a')
+	if len(sys.argv) > 2:
+		EPOCH_START = int(sys.argv[2].split('_')[-1].split('.')[0])
+	else:
+		EPOCH_START = 0
 
-	for epoch in range(EPOCHS):
+	for epoch in range(EPOCH_START, EPOCHS):
 		train_data.reset()
 
 		print 'Epoch ', epoch + 1
