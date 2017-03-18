@@ -62,6 +62,10 @@ GRAD_CLIP = 5.0
 # number of epochs
 EPOCHS = 100
 
+# training parameters
+reduced_instances = 1
+learning_rate = 0.001
+
 print "Loading embedding matrix"
 try:
 	embed = np.transpose(np.load(MODEL_DIR + 'embedding_matrix.npy').astype('float32'))
@@ -88,7 +92,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 																		   load_dict=load_dict, 
 																		   load_embedding_matrix=load_embedding_data, 
 																		   save_data=False, 
-																		   reduced_instances=-1)
+																		   reduced_instances=reduced_instances)
 	print 'Shape of image features: ', image_features.shape
 	print 'Shape of questions_tensor: ', questions_tensor.shape
 	print 'Shape of answers_tensor: ', answers_tensor.shape
@@ -237,7 +241,8 @@ def build_decoder(tparams, lfcode, max_steps):
 
 	init_h1 = lfcode
 	init_h2 = T.alloc(0., n_samples, hdim2)
-	memory_1 = T.alloc(0., n_samples, hdim1)
+	# memory_1 = T.alloc(0., n_samples, hdim1)
+	memory_1 = lfcode
 	memory_2 = T.alloc(0., n_samples, hdim2)
 
 	init_token = T.tile(embeddings.T[word_idx_map['<sos>'], :], (n_samples, 1))
@@ -307,14 +312,15 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
 
 	# set learning rate before training
-	lrate = 0.001
+	lrate = learning_rate
 
 	# time and cost will be output to the text file in BugReports folder
-	training_output = open('../../BugReports/lfe_train_output_-1_10-3.txt','a')
 	if len(sys.argv) > 2:
 		EPOCH_START = int(sys.argv[2].split('_')[-1].split('.')[0])
+		training_output = open('../../BugReports/lfe_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','a')
 	else:
 		EPOCH_START = 0
+		training_output = open('../../BugReports/lfe_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','w')
 
 	for epoch in range(EPOCH_START, EPOCHS):
 		train_data.reset()
@@ -351,7 +357,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 				params[key] = val.get_value()
 
 			# numpy saving
-			np.savez(MODEL_DIR + 'LFE/lfe_-1_10-3_'+str(epoch + 1)+'.npz', **params)
+			np.savez(MODEL_DIR + 'LFE/lfe_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
 			print 'Done!'
 
 		print 'Completed Epoch ', epoch + 1 
