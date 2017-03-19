@@ -60,10 +60,10 @@ MAX_TOKENS = 60
 GRAD_CLIP = 5.0
 
 # number of epochs
-EPOCHS = 1
+EPOCHS = 100
 
 # training parameters
-reduced_instances = 2
+reduced_instances = -1
 learning_rate = 0.001
 
 print "Loading embedding matrix"
@@ -293,33 +293,33 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	f_cost = theano.function(inps, [cost, lfcode_printed, img_printed, que_printed, his_printed], on_unused_input='ignore', profile=False)
 	print "Done!"
 
-	# print "Computing gradients"
-	# param_list=[val for key, val in tparams.iteritems()]
-	# grads = T.grad(cost, wrt=param_list)
+	print "Computing gradients"
+	param_list=[val for key, val in tparams.iteritems()]
+	grads = T.grad(cost, wrt=param_list)
 
-	# # computing norms
-	# f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
-	# f_weight_norm = theano.function([], [(v**2).sum() for k, v in tparams.iteritems()], profile=False)
+	# computing norms
+	f_grad_norm = theano.function(inps, [(g**2).sum() for g in grads], profile=False)
+	f_weight_norm = theano.function([], [(v**2).sum() for k, v in tparams.iteritems()], profile=False)
 
-	# # gradients are clipped beyond certain values
-	# g2 = 0.
-	# for g in grads:
-	# 	g2 += (g**2).sum()
-	# new_grads = []
-	# for g in grads:
-	# 	new_grads.append(T.switch(g2 > (GRAD_CLIP**2),
-	# 								g / T.sqrt(g2)*GRAD_CLIP, g))
-	# grads = new_grads
+	# gradients are clipped beyond certain values
+	g2 = 0.
+	for g in grads:
+		g2 += (g**2).sum()
+	new_grads = []
+	for g in grads:
+		new_grads.append(T.switch(g2 > (GRAD_CLIP**2),
+									g / T.sqrt(g2)*GRAD_CLIP, g))
+	grads = new_grads
 
-	# # learning rate
-	# lr = T.scalar(name='lr', dtype='float32')
+	# learning rate
+	lr = T.scalar(name='lr', dtype='float32')
 
-	# # gradients, update parameters
-	# print "Setting up optimizer"
-	# f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
+	# gradients, update parameters
+	print "Setting up optimizer"
+	f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
 
-	# # set learning rate before training
-	# lrate = learning_rate
+	# set learning rate before training
+	lrate = learning_rate
 
 	# time and cost will be output to the text file in BugReports folder
 	if len(sys.argv) > 2:
@@ -337,35 +337,35 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 		epoch_start = time.time()
 
 		for batch_idx in range(train_data.batches):
-			ibatch, qbatch, hbatch, abatch = train_data.get_batch()
+			# ibatch, qbatch, hbatch, abatch = train_data.get_batch()
 			# print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
 			
-			batch_cost, lfcode, i, q, h = f_cost(ibatch, qbatch, hbatch, abatch)
+			# batch_cost, lfcode, i, q, h = f_cost(ibatch, qbatch, hbatch, abatch)
 
-		# 	t_start = time.time()
-		# 	# directly unfolds the tuple returned as arguments to the function which reduces memory footprint
-		# 	cost = f_grad_shared(*train_data.get_batch())
-		# 	f_update(lrate)
-		# 	td = time.time() - t_start
+			t_start = time.time()
+			# directly unfolds the tuple returned as arguments to the function which reduces memory footprint
+			cost = f_grad_shared(*train_data.get_batch())
+			f_update(lrate)
+			td = time.time() - t_start
 
-		# 	epoch_cost += cost
+			epoch_cost += cost
 			
-		# 	if not batch_idx % 20:
-		# 		training_output.write('Epoch: ' + str(epoch) + ', Batch ID: ' + str(batch_idx) + ', Cost: ' + str(cost) + ', Time: ' + str(td) + '\n')
+			if not batch_idx % 20:
+				training_output.write('Epoch: ' + str(epoch) + ', Batch ID: ' + str(batch_idx) + ', Cost: ' + str(cost) + ', Time: ' + str(td) + '\n')
 
-		# print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
-		# training_output.write('Epoch: ' + str(epoch + 1) + ', Cost: ' + str(epoch_cost) + ', Time: ' + str(time.time()-epoch_start) + '\n')
+		print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
+		training_output.write('Epoch: ' + str(epoch + 1) + ', Cost: ' + str(epoch_cost) + ', Time: ' + str(time.time()-epoch_start) + '\n')
 		
-		# if (epoch + 1) % 5 == 0:
-		# 	print 'Saving... '
+		if (epoch + 1) % 5 == 0:
+			print 'Saving... '
 
-		# 	params = {}
-		# 	for key, val in tparams.iteritems():
-		# 		params[key] = val.get_value()
+			params = {}
+			for key, val in tparams.iteritems():
+				params[key] = val.get_value()
 
-		# 	# numpy saving
-		# 	np.savez(MODEL_DIR + 'LFE/lfe_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
-		# 	print 'Done!'
+			# numpy saving
+			np.savez(MODEL_DIR + 'LFE/lfe_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
+			print 'Done!'
 
 		print 'Completed Epoch ', epoch + 1 
 
