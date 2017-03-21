@@ -36,7 +36,7 @@ EPOCHS = 100
 GRAD_CLIP = 5.0
 
 # other training constants
-reduced_instances = -1
+reduced_instances = 5
 learning_rate = 0.001
 
 # getting dimensionality
@@ -65,7 +65,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, 
 																		   load_dict=load_dict, 
 																		   load_embedding_matrix=load_embedding_data, 
-																		   save_data=False, 
+																		   save_data=False,
 																		   reduced_instances=reduced_instances)
 
 EMBEDDINGS_DIM = embed.shape[0]
@@ -117,7 +117,7 @@ def build_encoder(tparams):
 	# restructure
 	in_2 = T.as_tensor_variable(out_1[0])
 	
-	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_q, 2), n_steps=qsteps)
+	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_e, 2), n_steps=qsteps)
 
 	# samples x dim_projection
 	qcode = out_2[0][-1]
@@ -241,7 +241,7 @@ if len(sys.argv) <=1:
 
 		for batch_idx in range(train_data.batches):
 			t_start = time.time()
-			cost = f_grad_shared(*train_data.get_batch_seq2seq)
+			cost = f_grad_shared(*train_data.get_batch_seq2seq())
 			f_update(lrate)
 			td = time.time() - t_start
 
