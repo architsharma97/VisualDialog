@@ -29,7 +29,7 @@ else:
 	print "Running in train mode"
 	val = False
 
-print "Initializing constants"
+# initializing constants
 DATA_DIR = '../../Data/'
 MODEL_DIR = '../../Models/'
 
@@ -88,10 +88,10 @@ except:
 print "Preprocessing data"
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	# preprocess the training data to get input matrices and tensors
-	image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR, 
-																		   load_dict=load_dict, 
-																		   load_embedding_matrix=load_embedding_data, 
-																		   save_data=False, 
+	image_features, questions_tensor, answers_tensor, answers_tokens_idx = preprocess(DATA_DIR,
+																		   load_dict=load_dict,
+																		   load_embedding_matrix=load_embedding_data,
+																		   save_data=False,
 																		   reduced_instances=reduced_instances)
 	print 'Shape of image features: ', image_features.shape
 	print 'Shape of questions_tensor: ', questions_tensor.shape
@@ -121,7 +121,6 @@ EMBEDDINGS_DIM = embed.shape[0]
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	print "Preparing minibatches"
 	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=64)
-	train_data.get_counts()
 
 def initialize(address=None):
 	'''
