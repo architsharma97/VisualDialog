@@ -36,7 +36,7 @@ EPOCHS = 100
 GRAD_CLIP = 5.0
 
 # other training constants
-reduced_instances = 5
+reduced_instances = -1
 learning_rate = 0.001
 
 # getting dimensionality
@@ -67,7 +67,13 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 																		   load_embedding_matrix=load_embedding_data, 
 																		   save_data=False,
 																		   reduced_instances=reduced_instances)
-
+else:
+	image_features, captions, questions, answers_options, correct_options = preprocess(DATA_DIR,
+																		 load_dict=True,
+																		 load_embedding_matrix=True,
+																		 split='Val',
+																		 save_data=False,
+																		 reduced_instances=3)
 EMBEDDINGS_DIM = embed.shape[0]
 
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
@@ -265,3 +271,53 @@ if len(sys.argv) <=1:
 			print 'Done!'
 
 		print 'Completed Epoch ', epoch + 1 
+# Validation
+else:
+	que, qcode = build_encoder(tparams)
+
+	qcode_print = theano.printing.Print('Encoded Value: ')(qcode)
+
+	print "Building decoder"
+	pred = build_decoder(tparams, qcode, MAX_TOKENS)
+
+	inps = [que]
+	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
+
+	if len(sys.argv) > 2:
+		rank_file = open(sys.argv[2], 'w')
+
+	for idx in range(image_features.shape[0]):
+		print "Image: ", idx + 1
+
+		# 10 questions per image
+		for i in range(10):
+			out = f(questions[idx][i].reshape((questions[idx][i].shape[0], 1, questions[idx][i].shape[1])))
+			out = out.reshape((out.shape[0], out.shape[2]))
+			out_idx = np.argmax(out, axis=1)
+			out = np.transpose(embed)[out_idx]
+
+			# extract ranking of correct option
+			scores = []
+			for options_i, option in enumerate(answers_options[idx][i]):
+				score = (out[:len(option), :]*option).sum()/option.shape[0]
+				scores.append([score, options_i])
+				# print score
+			
+			scores.sort(key=lambda x: x[0], reverse=True)
+			cor = int(correct_options[idx][i])
+			
+			for r, pair in enumerate(scores):
+				if cor == pair[1]:
+					rank = r + 1
+					break
+			
+			if len(sys.argv) > 2:
+				rank_file.write(str(rank) + ',' + str(scores[cor]) + '\n')
+
+			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank 
+
+			for j in out_idx:
+				if j == word_idx_map['<eos>']:
+					print '<eos>'
+					break
+				print idx_word_map[j],
