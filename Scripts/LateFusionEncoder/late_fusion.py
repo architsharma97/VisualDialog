@@ -337,14 +337,14 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 		epoch_start = time.time()
 
 		for batch_idx in range(train_data.batches):
-			# ibatch, qbatch, hbatch, abatch = train_data.get_batch()
+			# ibatch, qbatch, hbatch, abatch = train_data.get_batch_lfe()
 			# print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
 			
 			# batch_cost, lfcode, i, q, h = f_cost(ibatch, qbatch, hbatch, abatch)
 
 			t_start = time.time()
 			# directly unfolds the tuple returned as arguments to the function which reduces memory footprint
-			cost = f_grad_shared(*train_data.get_batch())
+			cost = f_grad_shared(*train_data.get_batch_lfe())
 			f_update(lrate)
 			td = time.time() - t_start
 

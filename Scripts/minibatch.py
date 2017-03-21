@@ -15,6 +15,8 @@ class data():
 		print 'Batch Size: ' + str(batch_size)
 		print 'Embedding Size: ' + str(self.embed_size)
 
+		self.get_counts()
+
 	def get_counts(self):
 		que_by_ans_tokens = [{} for i in range(10)]
 		que_by_his_tokens= {}
@@ -101,7 +103,7 @@ class data():
 		self.qlen_order = set(self.qlen_order)
 		self.qlen_order = list(self.qlen_order)
 
-	# call only if you want to crash
+	# pretty sure to crash
 	def process_for_lfe(self):
 		print "Processing images"
 		# repeating all the images 10 times
@@ -146,7 +148,7 @@ class data():
 		while self.qlen_order[self.curr[1]] not in self.que_by_ans_tokens[self.curr[0]]:
 			self.curr[0] += 1
 
-	def get_batch(self):
+	def get_batch_lfe(self):
 		# getting number of tokens in the question matrix
 		que_order_idx = self.curr[0]
 		ans_tokens = self.qlen_order[self.curr[1]]
