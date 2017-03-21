@@ -12,7 +12,7 @@ def load_obj(address):
 	with open(address, 'rb')as f:
 		return pickle.load(f)
 
-def init_weights(nin, nout, type_init='uni', scale=0.1):
+def init_weights(nin, nout, type_init='uni', scale=1):
 	'''
 	type_init={'uni' : uniform initialization between [-scale,scale],
 		  'ortho': orthogonal weight initialization, initializes uniformly if nin!=nout }

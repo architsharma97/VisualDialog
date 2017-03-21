@@ -120,7 +120,7 @@ EMBEDDINGS_DIM = embed.shape[0]
 
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	print "Preparing minibatches"
-	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=128)
+	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=64)
 	train_data.get_counts()
 
 def initialize(address=None):
@@ -271,7 +271,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	img, que, his, lfcode = build_lfe(tparams)
 
 	# printing value of encoder output
-	lfcode_printed = theano.printing.Print('Encoded Value: ')(lfcode)
+	lfc_printed = theano.printing.Print('Encoded Value: ')(lfcode)
 	img_printed = theano.printing.Print('Input image: ')(img)
 	que_printed = theano.printing.Print('Input question: ')(que)
 	his_printed = theano.printing.Print('Input history: ')(his)
@@ -290,7 +290,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	inps = [img, que, his, ans]
 
 	print "Constructing graph"
-	f_cost = theano.function(inps, [cost, lfcode_printed, img_printed, que_printed, his_printed], on_unused_input='ignore', profile=False)
+	f_cost = theano.function(inps, [cost, lfc_printed, img_printed, que_printed, his_printed], on_unused_input='ignore', profile=False)
 	print "Done!"
 
 	print "Computing gradients"
