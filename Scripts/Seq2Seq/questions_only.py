@@ -11,7 +11,7 @@ from basic_layers import param_init_lstm, lstm_layer
 from adam import adam
 import minibatch
 
-from Collections import OrderedDict
+from collections import OrderedDict
 import time
 
 '''
@@ -173,7 +173,7 @@ def build_decoder(tparams, code, max_steps):
 	return T.as_tensor_variable(soft_tokens)
 
 # actual graph for seq2seq
-if len(sys.argv[2]) > 2:
+if len(sys.argv) > 2:
 	tparams = initialize(sys.argv[2])
 else:
 	tparams = initialize()
