@@ -277,7 +277,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	
 	# answer tensor should be a binary tensor with 1's at the positions which needs to be included
 	# timesteps x number of answers in minibatch x vocabulary size
-	ans = T.tensor3('ans', dtype='int64')
+	ans = T.tensor3('ans', dtype='int8')
 
 	print "Building decoder"
 	pred = build_decoder(tparams, lfcode, ans.shape[0])

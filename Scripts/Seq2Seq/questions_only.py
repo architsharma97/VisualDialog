@@ -184,5 +184,84 @@ if len(sys.argv) <=1:
 	que, qcode = build_encoder(tparams)
 
 	qcode_printed = theano.printing.Print('Encoded value: ')(qcode)
+	
+	# timesteps x number of answers in minibatch x vocabulary size
+	ans = T.tensor3('ans', dtype='int8')
 
-	print 
+	print "Building decoder"
+	pred = build_decoder(tparams, qcode, ans.shape[0])
+
+	print "Building cost function"
+	# cost function
+	cost = (-T.log(pred) * ans).sum()
+
+	inps = [que, ans]
+
+	print "Constructing graph"
+	f_cost = theano.function(inps, [cost, qcode_printed], on_unused_input='ignore', profile=False)
+
+	print "Computing gradients"
+	param_list=[val for key, val in tparams.iteritems()]
+	grads = T.grad(cost, wrt=param_list)
+
+	# gradients are clipped beyond certain values
+	g2 = 0.
+	for g in grads:
+		g2 += (g**2).sum()
+	new_grads = []
+	for g in grads:
+		new_grads.append(T.switch(g2 > (GRAD_CLIP**2),
+									g / T.sqrt(g2)*GRAD_CLIP, g))
+	grads = new_grads
+
+	# learning rate
+	lr = T.scalar(name='lr', dtype='float32')
+
+	# gradients, update parameters
+	print "Setting up optimizer"
+	f_grad_shared, f_update = adam(lr, tparams, grads, inps, cost)
+
+	# set learning rate before training
+	lrate = learning_rate
+
+	# time and cost will be output to the text file in BugReports folder
+	if len(sys.argv) > 2:
+		EPOCH_START = int(sys.argv[2].split('_')[-1].split('.')[0])
+		training_output = open('../../BugReports/seq2seq_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','a')
+	else:
+		EPOCH_START = 0
+		training_output = open('../../BugReports/seq2seq_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','w')
+
+	for epoch in range(EPOCH_START, EPOCHS):
+		train_data.reset()
+
+		print 'Epoch: ', epoch + 1
+		epoch_cost = 0.0
+		epoch_start = time.time()
+
+		for batch_idx in range(train_data.batches):
+			t_start = time.time()
+			cost = f_grad_shared(*train_data.get_batch_seq2seq)
+			f_update(lrate)
+			td = time.time() - t_start
+
+			epoch_cost += cost
+
+			if not batch_idx % 20:
+				training_output.write('Epoch: ' + str(epoch) + ', Batch ID: ' + str(batch_idx) + ', Cost: ' + str(cost) + ', Time: ' + str(td) + '\n')
+
+		print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
+		training_output.write('Epoch: ' + str(epoch + 1) + ', Cost: ' + str(epoch_cost) + ', Time: ' + str(time.time()-epoch_start) + '\n')
+
+		if (epoch + 1) % 5 == 0:
+			print 'Saving... '
+
+			params = {}
+			for key, val in tparams.iteritems():
+				params[key] = val.get_value()
+
+			# numpy saving
+			np.savez(MODEL_DIR + 'Seq2Seq/seq2seq_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
+			print 'Done!'
+
+		print 'Completed Epoch ', epoch + 1 

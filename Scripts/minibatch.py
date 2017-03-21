@@ -170,7 +170,7 @@ class data():
 				while self.curr[1] < len(self.qlen_order) and self.qlen_order[self.curr[1]] not in self.que_by_ans_tokens[self.curr[0]]:
 					self.curr[0] += 1
 		
-		# first pass to get maximum sizes of history and answers
+		# first pass to get maximum sizes of history and question sizes
 		mhsize = 0
 		mqsize = 0
 		for idx in qidx:
@@ -214,3 +214,45 @@ class data():
 			hbatch[cur_len, i, :] = self.eos
 
 		return ibatch, qbatch, hbatch, abatch
+
+	def get_batch_seq2seq(self):
+		# getting number of tokens in the question matrix
+		que_order_idx = self.curr[0]
+		ans_tokens = self.qlen_order[self.curr[1]]
+
+		# checks if enough questions for batch size, else makes a smaller batch
+		if len(self.que_by_ans_tokens[que_order_idx][ans_tokens][self.curr[2]:]) > self.batch_size:
+			qidx = self.que_by_ans_tokens[que_order_idx][ans_tokens][self.curr[2]: self.curr[2]+self.batch_size]
+			self.curr[2] += self.batch_size
+		else:
+			qidx = self.que_by_ans_tokens[que_order_idx][ans_tokens][self.curr[2]:]
+			que_order_idx += 1
+			while que_order_idx < 10 and (ans_tokens not in self.que_by_ans_tokens[que_order_idx]):
+				que_order_idx += 1
+
+			if que_order_idx < 10:
+				self.curr = [que_order_idx, self.curr[1], 0]
+			else:
+				self.curr = [0, self.curr[1] + 1, 0]
+				while self.curr[1] < len(self.qlen_order) and self.qlen_order[self.curr[1]] not in self.que_by_ans_tokens[self.curr[0]]:
+					self.curr[0] += 1
+
+		mqsize = 0
+		for idx in qidx:
+			if self.que_sizes[idx] > mqsize:
+				mqsize = self.que_sizes[idx]
+
+		qbatch = np.zeros((mqsize, len(qidx), self.embed_size), dtype=np.float32)
+		abatch = np.zeros((ans_tokens - 1, len(qidx), self.vocab_size),  dtype=np.int8)
+
+		for i, idx in enumerate(qidx):
+			qlen = self.que[idx].shape[0]
+			qbatch[:qlen, i, :] = self.que[idx]
+			ans_idx = (idx/10)*11 + idx%10 + 1
+
+			# construction of answer
+			cur_ans = self.ans_tokens[idx]
+			for j in range(len(cur_ans)):
+				abatch[j, i, cur_ans[j]] = 1
+				
+		return qbatch, abatch
