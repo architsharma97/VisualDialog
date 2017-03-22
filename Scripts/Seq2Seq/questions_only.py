@@ -36,7 +36,7 @@ EPOCHS = 100
 GRAD_CLIP = 5.0
 
 # other training constants
-reduced_instances = -1
+reduced_instances = 1
 learning_rate = 0.001
 
 # getting dimensionality
@@ -269,7 +269,7 @@ if len(sys.argv) <=1:
 			# numpy saving
 			np.savez(MODEL_DIR + 'Seq2Seq/seq2seq_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
 			np.savez(MODEL_DIR + 'Backup/seq2seq_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
-			np.save(MODEL_DIR + 'Backup/seq2seq_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npy', **params)
+			np.save(MODEL_DIR + 'Backup/seq2seq_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npy', params)
 			print 'Done!'
 
 		print 'Completed Epoch ', epoch + 1 
