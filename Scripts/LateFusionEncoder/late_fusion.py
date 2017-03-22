@@ -349,7 +349,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 
 			epoch_cost += cost
 			
-			if not batch_idx % 20:
+			if not batch_idx % 100:
 				training_output.write('Epoch: ' + str(epoch) + ', Batch ID: ' + str(batch_idx) + ', Cost: ' + str(cost) + ', Time: ' + str(td) + '\n')
 
 		print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
