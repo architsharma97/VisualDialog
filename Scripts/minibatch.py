@@ -182,13 +182,20 @@ class data():
 		# answer tokens does not need the start token as the first token in predicted answer will not be start token. 
 		ibatch = np.zeros((len(qidx), self.img.shape[1]), dtype=np.float32)
 		qbatch = np.zeros((mqsize, len(qidx), self.embed_size), dtype=np.float32)
+		mqbatch = np.zeros((mqsize, len(qidx)), dtype=np.int8)
 		hbatch = np.zeros((mhsize, len(qidx), self.embed_size), dtype=np.float32)
+		mhbatch = np.zeros((mhsize, len(qidx)), dtype=np.int8)
 		abatch = np.zeros((ans_tokens - 1, len(qidx), self.vocab_size),  dtype=np.int8)
 
 		for i, idx in enumerate(qidx):
+			# question batch and mask
 			qlen = self.que[idx].shape[0]
 			qbatch[:qlen, i, :] = self.que[idx]
+			mqbatch[:qlen, i] = 1
+
+			# image batch
 			ibatch[i, :] = self.img[idx/10, :]
+			# answer index
 			ans_idx = (idx/10)*11 + idx%10 + 1
 
 			# construction of answer
@@ -212,8 +219,10 @@ class data():
 				hbatch[cur_len:cur_len+aclen,i, :] = self.ans[ans_idx][1:-1, :]
 				cur_len += aclen
 			hbatch[cur_len, i, :] = self.eos
+			# create mask for history
+			mhbatch[:cur_len + 1, i] = 1
 
-		return ibatch, qbatch, hbatch, abatch
+		return ibatch, qbatch, mqbatch, hbatch, mhbatch, abatch
 
 	def get_batch_seq2seq(self):
 		# getting number of tokens in the question matrix
@@ -243,11 +252,14 @@ class data():
 				mqsize = self.que_sizes[idx]
 
 		qbatch = np.zeros((mqsize, len(qidx), self.embed_size), dtype=np.float32)
+		qmask = np.zeros((mqsize, len(qidx)), dtype=np.int8)
 		abatch = np.zeros((ans_tokens - 1, len(qidx), self.vocab_size),  dtype=np.int8)
 
 		for i, idx in enumerate(qidx):
+			# question batch and mask
 			qlen = self.que[idx].shape[0]
 			qbatch[:qlen, i, :] = self.que[idx]
+			qmask [:qlen]
 			ans_idx = (idx/10)*11 + idx%10 + 1
 
 			# construction of answer
@@ -255,4 +267,4 @@ class data():
 			for j in range(len(cur_ans)):
 				abatch[j, i, cur_ans[j]] = 1
 				
-		return qbatch, abatch
+		return qbatch, qmask, abatch

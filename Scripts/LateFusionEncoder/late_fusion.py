@@ -177,27 +177,31 @@ def build_lfe(tparams):
 	que = T.tensor3('que', dtype='float32')
 	his = T.tensor3('his', dtype='float32')
 
+	# steps x samples
+	qmask = T.matrix('qmask', dtype='int8')
+	hmask = T.matrix('hmask', dtyp='int8')
+
 	qsteps = que.shape[0]
 	hsteps = his.shape[0]
 
 	# encoding questions
-	out_1 = lstm_layer(tparams, que, _concat(lstm_prefix_q, 1), n_steps=qsteps)
+	out_1 = lstm_layer(tparams, que, _concat(lstm_prefix_q, 1), mask=qmask, n_steps=qsteps)
 	
 	# restructure
 	in_2 = T.as_tensor_variable(out_1[0])
 
-	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_q, 2), n_steps=qsteps)
+	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_q, 2), mask=qmask, n_steps=qsteps)
 
 	# samples x dim_projection
 	qcode = out_2[0][-1]
 
 	# encoding history
-	out_3 = lstm_layer(tparams, his, _concat(lstm_prefix_h, 1), n_steps=hsteps)
+	out_3 = lstm_layer(tparams, his, _concat(lstm_prefix_h, 1), mask=hmask, n_steps=hsteps)
 	
 	# restructure
 	in_4 = T.as_tensor_variable(out_3[0])
 
-	out_4 = lstm_layer(tparams, in_4, _concat(lstm_prefix_h, 2), n_steps=hsteps)
+	out_4 = lstm_layer(tparams, in_4, _concat(lstm_prefix_h, 2), mask=hmask, n_steps=hsteps)
 
 	# samples x dim_projection
 	hcode = out_4[0][-1]
@@ -206,7 +210,7 @@ def build_lfe(tparams):
 	in_5 = T.concatenate([img, qcode, hcode], axis=1)
 	lfcode = fflayer(tparams, in_5, ff_prefix)
 
-	return img, que, his, lfcode
+	return img, que, qmask, his, hmask, lfcode
 
 def build_decoder(tparams, lfcode, max_steps):
 	'''
@@ -267,13 +271,15 @@ else:
 # TRAINING
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	print "Building encoder for the model"
-	img, que, his, lfcode = build_lfe(tparams)
+	img, que, qmask, his, hmask, lfcode = build_lfe(tparams)
 
 	# printing value of encoder output
 	lfc_printed = theano.printing.Print('Encoded Value: ')(lfcode)
 	img_printed = theano.printing.Print('Input image: ')(img)
 	que_printed = theano.printing.Print('Input question: ')(que)
+	qmask_printed = theano.printing.Print('Input Question: ')(qmask)
 	his_printed = theano.printing.Print('Input history: ')(his)
+	hmask_printed = theano.printing.Print('History mask: ')(hmask)
 	
 	# answer tensor should be a binary tensor with 1's at the positions which needs to be included
 	# timesteps x number of answers in minibatch x vocabulary size
@@ -286,10 +292,10 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	# cost function
 	cost = (-T.log(pred) * ans).sum()
 
-	inps = [img, que, his, ans]
+	inps = [img, que, qmask, his, hmask, ans]
 
 	print "Constructing graph"
-	f_cost = theano.function(inps, [cost, lfc_printed, img_printed, que_printed, his_printed], on_unused_input='ignore', profile=False)
+	f_cost = theano.function(inps, [cost, lfc_printed, img_printed, que_printed, qmask_printed, his_printed, hmask_printed], on_unused_input='ignore', profile=False)
 	print "Done!"
 
 	print "Computing gradients"
@@ -336,10 +342,10 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 		epoch_start = time.time()
 
 		for batch_idx in range(train_data.batches):
-			# ibatch, qbatch, hbatch, abatch = train_data.get_batch_lfe()
+			# ibatch, qbatch, mqbatch, hbatch, mhbatch, abatch = train_data.get_batch_lfe()
 			# print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
 			
-			# batch_cost, lfcode, i, q, h = f_cost(ibatch, qbatch, hbatch, abatch)
+			# batch_cost, lfcode, i, q, qm, h, hm = f_cost(ibatch, qbatch, mqbatch, hbatch, mhbatch, abatch)
 
 			t_start = time.time()
 			# directly unfolds the tuple returned as arguments to the function which reduces memory footprint

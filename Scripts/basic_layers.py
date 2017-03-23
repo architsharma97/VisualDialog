@@ -51,7 +51,8 @@ def param_init_lstm(params, prefix, nin, units):
 	return params
 
 def lstm_layer(tparams, state_below, 
-			   prefix, 
+			   prefix,
+			   mask=None
 			   init_state=None, 
 			   init_memory=None,
 			   one_step=False, 
@@ -87,7 +88,7 @@ def lstm_layer(tparams, state_below,
 			return _x[:, :, n*dim:(n+1)*dim]
 		return _x[:, n*dim:(n+1)*dim]
 
-	def _step(sbelow, sbefore, cell_before, *args):
+	def _step(mask, sbelow, sbefore, cell_before, *args):
 		preact = T.dot(sbefore, U)
 		preact += sbelow
 		preact += b
@@ -97,9 +98,16 @@ def lstm_layer(tparams, state_below,
 		o = T.nnet.sigmoid(_slice(preact, 2, dim))
 		c = T.tanh(_slice(preact, 3, dim))
 
-		c = f * cell_before + i * c
-		h = o * T.tanh(c)
-
+		if mask is None:
+			# should arise in decoding situations only
+			c = f * cell_before + i * c
+			h = o * T.tanh(c)
+		else:
+			c = f * cell_before + i * c
+			c = mask * c + (1 - mask) * cell_before
+			h = o * T.tanh(c)
+			h = mask * h + (1 - mask) * sbefore
+			
 		return h, c
 
 	lstm_state_below = T.dot(state_below, W) + b
@@ -109,11 +117,14 @@ def lstm_layer(tparams, state_below,
 													 -1))
 	# mainly for decoder
 	if one_step:
-		h, c = _step(lstm_state_below, init_state, init_memory)
+		h, c = _step(mask, lstm_state_below, init_state, init_memory)
 		return h, c
 	
+	if mask is None:
+		mask = T.alloc(1, n_steps, n_samples)
+	
 	outs, updates = theano.scan(_step, 
-								sequences=[lstm_state_below],
+								sequences=[mask, lstm_state_below],
 								outputs_info=[init_state, init_memory],
 								name=_concat(prefix, 'layers'),
 								non_sequences=non_seq,
