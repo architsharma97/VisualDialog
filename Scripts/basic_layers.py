@@ -52,7 +52,7 @@ def param_init_lstm(params, prefix, nin, units):
 
 def lstm_layer(tparams, state_below, 
 			   prefix,
-			   mask=None
+			   mask=None,
 			   init_state=None, 
 			   init_memory=None,
 			   one_step=False, 
@@ -104,10 +104,10 @@ def lstm_layer(tparams, state_below,
 			h = o * T.tanh(c)
 		else:
 			c = f * cell_before + i * c
-			c = mask * c + (1 - mask) * cell_before
+			c = (mask * (c.T) + (1 - mask) * (cell_before.T)).T
 			h = o * T.tanh(c)
-			h = mask * h + (1 - mask) * sbefore
-			
+			h = (mask * (h.T) + (1 - mask) * (sbefore.T)).T
+
 		return h, c
 
 	lstm_state_below = T.dot(state_below, W) + b

@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 100
 
 # training parameters
-reduced_instances = -1
+reduced_instances = 1
 learning_rate = 0.001
 
 print "Loading embedding matrix"
@@ -179,7 +179,7 @@ def build_lfe(tparams):
 
 	# steps x samples
 	qmask = T.matrix('qmask', dtype='int8')
-	hmask = T.matrix('hmask', dtyp='int8')
+	hmask = T.matrix('hmask', dtype='int8')
 
 	qsteps = que.shape[0]
 	hsteps = his.shape[0]
