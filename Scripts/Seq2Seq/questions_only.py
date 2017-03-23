@@ -36,7 +36,7 @@ EPOCHS = 100
 GRAD_CLIP = 5.0
 
 # other training constants
-reduced_instances = 1
+reduced_instances = -1
 learning_rate = 0.001
 
 # getting dimensionality
