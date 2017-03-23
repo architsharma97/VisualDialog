@@ -36,7 +36,7 @@ EPOCHS = 100
 GRAD_CLIP = 5.0
 
 # other training constants
-reduced_instances = -1
+reduced_instances = 1
 learning_rate = 0.001
 
 # getting dimensionality
@@ -117,18 +117,28 @@ def build_encoder(tparams):
 
 	qsteps = que.shape[0]
 
+	# steps x samples
+	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
+		qmask = T.matrix('qmask', dtype='float32')
+	else:
+		# validation does not require masking as it is stochastic
+		qmask = None
+
 	# output for the first layer of lstm
-	out_1 = lstm_layer(tparams, que, _concat(lstm_prefix_e, 1), n_steps = qsteps)
+	out_1 = lstm_layer(tparams, que, _concat(lstm_prefix_e, 1), mask=qmask, n_steps = qsteps)
 
 	# restructure
 	in_2 = T.as_tensor_variable(out_1[0])
 	
-	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_e, 2), n_steps=qsteps)
+	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_e, 2), mask=qmask, n_steps=qsteps)
 
 	# samples x dim_projection
 	qcode = out_2[0][-1]
 
-	return que, qcode
+	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
+		return que, qmask, qcode
+	else:
+		return que, qcode
 
 def build_decoder(tparams, code, max_steps):
 	'''
@@ -187,10 +197,10 @@ else:
 # Training
 if len(sys.argv) <=1:
 	print "Building encoder for the model"
-	que, qcode = build_encoder(tparams)
+	que, qmask, qcode = build_encoder(tparams)
 
 	qcode_printed = theano.printing.Print('Encoded value: ')(qcode)
-	
+	qmask_printed = theano.printing.Print('Mask: ')(qmask)
 	# timesteps x number of answers in minibatch x vocabulary size
 	ans = T.tensor3('ans', dtype='int8')
 
@@ -201,10 +211,10 @@ if len(sys.argv) <=1:
 	# cost function
 	cost = (-T.log(pred) * ans).sum()
 
-	inps = [que, ans]
+	inps = [que, qmask, ans]
 
 	print "Constructing graph"
-	f_cost = theano.function(inps, [cost, qcode_printed], on_unused_input='ignore', profile=False)
+	f_cost = theano.function(inps, [cost, qcode_printed, qmask_printed], on_unused_input='ignore', profile=False)
 
 	print "Computing gradients"
 	param_list=[val for key, val in tparams.iteritems()]

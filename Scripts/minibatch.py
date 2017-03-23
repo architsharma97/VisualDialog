@@ -182,16 +182,16 @@ class data():
 		# answer tokens does not need the start token as the first token in predicted answer will not be start token. 
 		ibatch = np.zeros((len(qidx), self.img.shape[1]), dtype=np.float32)
 		qbatch = np.zeros((mqsize, len(qidx), self.embed_size), dtype=np.float32)
-		mqbatch = np.zeros((mqsize, len(qidx)), dtype=np.int8)
+		mqbatch = np.zeros((mqsize, len(qidx)), dtype=np.float32)
 		hbatch = np.zeros((mhsize, len(qidx), self.embed_size), dtype=np.float32)
-		mhbatch = np.zeros((mhsize, len(qidx)), dtype=np.int8)
+		mhbatch = np.zeros((mhsize, len(qidx)), dtype=np.float32)
 		abatch = np.zeros((ans_tokens - 1, len(qidx), self.vocab_size),  dtype=np.int8)
 
 		for i, idx in enumerate(qidx):
 			# question batch and mask
 			qlen = self.que[idx].shape[0]
 			qbatch[:qlen, i, :] = self.que[idx]
-			mqbatch[:qlen, i] = 1
+			mqbatch[:qlen, i] = 1.
 
 			# image batch
 			ibatch[i, :] = self.img[idx/10, :]
@@ -220,7 +220,7 @@ class data():
 				cur_len += aclen
 			hbatch[cur_len, i, :] = self.eos
 			# create mask for history
-			mhbatch[:cur_len + 1, i] = 1
+			mhbatch[:cur_len + 1, i] = 1.
 
 		return ibatch, qbatch, mqbatch, hbatch, mhbatch, abatch
 
@@ -252,14 +252,14 @@ class data():
 				mqsize = self.que_sizes[idx]
 
 		qbatch = np.zeros((mqsize, len(qidx), self.embed_size), dtype=np.float32)
-		qmask = np.zeros((mqsize, len(qidx)), dtype=np.int8)
+		qmask = np.zeros((mqsize, len(qidx)), dtype=np.float32)
 		abatch = np.zeros((ans_tokens - 1, len(qidx), self.vocab_size),  dtype=np.int8)
 
 		for i, idx in enumerate(qidx):
 			# question batch and mask
 			qlen = self.que[idx].shape[0]
 			qbatch[:qlen, i, :] = self.que[idx]
-			qmask [:qlen]
+			qmask [:qlen, i] = 1.
 			ans_idx = (idx/10)*11 + idx%10 + 1
 
 			# construction of answer

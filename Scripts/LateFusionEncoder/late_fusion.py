@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 100
 
 # training parameters
-reduced_instances = 1
+reduced_instances = -1
 learning_rate = 0.001
 
 print "Loading embedding matrix"
@@ -179,8 +179,8 @@ def build_lfe(tparams):
 
 	# steps x samples
 	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
-		qmask = T.matrix('qmask', dtype='int8')
-		hmask = T.matrix('hmask', dtype='int8')
+		qmask = T.matrix('qmask', dtype='float32')
+		hmask = T.matrix('hmask', dtype='float32')
 	else:
 		# validation does not require masking as it is stochastic
 		qmask = None
@@ -285,7 +285,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	lfc_printed = theano.printing.Print('Encoded Value: ')(lfcode)
 	img_printed = theano.printing.Print('Input image: ')(img)
 	que_printed = theano.printing.Print('Input question: ')(que)
-	qmask_printed = theano.printing.Print('Input Question: ')(qmask)
+	qmask_printed = theano.printing.Print('Question Mask: ')(qmask)
 	his_printed = theano.printing.Print('Input history: ')(his)
 	hmask_printed = theano.printing.Print('History mask: ')(hmask)
 	

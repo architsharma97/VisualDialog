@@ -104,9 +104,9 @@ def lstm_layer(tparams, state_below,
 			h = o * T.tanh(c)
 		else:
 			c = f * cell_before + i * c
-			c = (mask * (c.T) + (1 - mask) * (cell_before.T)).T
+			c = (mask * (c.T) + (1. - mask) * (cell_before.T)).T
 			h = o * T.tanh(c)
-			h = (mask * (h.T) + (1 - mask) * (sbefore.T)).T
+			h = (mask * (h.T) + (1. - mask) * (sbefore.T)).T
 
 		return h, c
 
