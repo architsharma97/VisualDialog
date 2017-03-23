@@ -178,8 +178,13 @@ def build_lfe(tparams):
 	his = T.tensor3('his', dtype='float32')
 
 	# steps x samples
-	qmask = T.matrix('qmask', dtype='int8')
-	hmask = T.matrix('hmask', dtype='int8')
+	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
+		qmask = T.matrix('qmask', dtype='int8')
+		hmask = T.matrix('hmask', dtype='int8')
+	else:
+		# validation does not require masking as it is stochastic
+		qmask = None
+		hmask = None
 
 	qsteps = que.shape[0]
 	hsteps = his.shape[0]
@@ -210,7 +215,10 @@ def build_lfe(tparams):
 	in_5 = T.concatenate([img, qcode, hcode], axis=1)
 	lfcode = fflayer(tparams, in_5, ff_prefix)
 
-	return img, que, qmask, his, hmask, lfcode
+	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
+		return img, que, qmask, his, hmask, lfcode
+	else:
+		return img, que, his, lfcode
 
 def build_decoder(tparams, lfcode, max_steps):
 	'''
