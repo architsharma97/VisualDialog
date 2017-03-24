@@ -98,8 +98,8 @@ def lstm_layer(tparams, state_below,
 		o = T.nnet.sigmoid(_slice(preact, 2, dim))
 		c = T.tanh(_slice(preact, 3, dim))
 
+		# should arise in decoding situations only
 		if mask is None:
-			# should arise in decoding situations only
 			c = f * cell_before + i * c
 			h = o * T.tanh(c)
 		else:
@@ -107,7 +107,7 @@ def lstm_layer(tparams, state_below,
 			c = (mask * (c.T) + (1. - mask) * (cell_before.T)).T
 			h = o * T.tanh(c)
 			h = (mask * (h.T) + (1. - mask) * (sbefore.T)).T
-
+			
 		return h, c
 
 	lstm_state_below = T.dot(state_below, W) + b
@@ -121,8 +121,8 @@ def lstm_layer(tparams, state_below,
 		return h, c
 	
 	if mask is None:
-		mask = T.alloc(1, n_steps, n_samples)
-	
+		mask = T.alloc(1., n_steps, n_samples)
+
 	outs, updates = theano.scan(_step, 
 								sequences=[mask, lstm_state_below],
 								outputs_info=[init_state, init_memory],

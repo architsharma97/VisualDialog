@@ -223,7 +223,7 @@ class data():
 			mhbatch[:cur_len + 1, i] = 1.
 
 		return ibatch, qbatch, mqbatch, hbatch, mhbatch, abatch
-
+	
 	def get_batch_seq2seq(self):
 		# getting number of tokens in the question matrix
 		que_order_idx = self.curr[0]
