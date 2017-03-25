@@ -18,17 +18,18 @@ class data():
 		self.get_counts()
 
 	def get_counts(self):
-		que_by_ans_tokens = [{} for i in range(10)]
+		# for questions asked at different positions
+		que_by_ans_tokens = [{}] * 10
 		que_by_his_tokens= {}
 		que_sizes = np.zeros((len(self.que), ), dtype=np.int16)
 		his_sizes = np.zeros((len(self.que), ), dtype=np.int16)
 		ans_sizes = np.zeros((len(self.que), ), dtype=np.int16)
 
-		# account for the extra sos and eos symbols
+		# accounts for the extra sos and eos symbols
 		for img_idx in range(len(self.img)):
 
 			# initialize history token count with the number of tokens in the caption
-			token_count_his = self.ans[img_idx*11].shape[0] - 2
+			token_count_his = self.ans[img_idx * 11].shape[0] - 2
 
 			for i in range(10):
 				que_idx = img_idx * 10 + i 
@@ -196,7 +197,7 @@ class data():
 			# image batch
 			ibatch[i, :] = self.img[idx/10, :]
 			# answer index
-			ans_idx = (idx/10)*11 + idx%10 + 1
+			ans_idx = (idx/10) * 11 + idx % 10 + 1
 
 			# construction of answer
 			cur_ans = self.ans_tokens[idx]
@@ -214,7 +215,7 @@ class data():
 				cur_len += qclen
 				
 				# append answer to history
-				ans_idx = (j/10)*11 + j%10 + 1
+				ans_idx = (j/10) * 11 + j % 10 + 1
 				aclen = self.ans[ans_idx].shape[0] - 2
 				hbatch[cur_len:cur_len+aclen,i, :] = self.ans[ans_idx][1:-1, :]
 				cur_len += aclen

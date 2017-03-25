@@ -16,8 +16,8 @@ def param_init_fflayer(params, prefix, nin, nout):
 	'''
 	Initializes weights for a feedforward layer
 	'''
-	params[_concat(prefix,'W')]=init_weights(nin, nout, type_init='ortho')
-	params[_concat(prefix,'b')]=np.zeros((nout,)).astype('float32')
+	params[_concat(prefix,'W')] = init_weights(nin, nout, type_init='ortho')
+	params[_concat(prefix,'b')] = np.zeros((nout,)).astype('float32')
 
 	return params
 
@@ -45,7 +45,9 @@ def param_init_lstm(params, prefix, nin, units):
 		init_weights(units, units, type_init='ortho'),
 		init_weights(units, units, type_init='ortho')],
 		axis=1)
+	
 	params[_concat(prefix, 'U')] = U
+	
 	params[_concat(prefix, 'b')] = np.zeros((4 * units,), dtype=np.float32)
 	
 	return params
@@ -60,6 +62,7 @@ def lstm_layer(tparams, state_below,
 	'''
 	Defines the forward pass of a LSTM for a sequence of questions/history (after passing through the embedding)
 	state_below: timesteps x samples x embedding_size
+	Use a mask if input contains sequences of variable length.
 	'''
 	if n_steps is None:
 		n_steps = state_below.shape[0]

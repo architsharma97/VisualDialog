@@ -84,8 +84,8 @@ def preprocess(path_to_data,
 					word_freq[token] = 1
 				else:
 					word_freq[token] += 1
-			for dialog in data[idx]['dialog']:
-				
+			
+			for dialog in data[idx]['dialog']:	
 				tokens_ques = nltk.word_tokenize(dialog['question'])
 				tokens_ans = nltk.word_tokenize(dialog['answer'])
 				if len(tokens_ans) > ntokens_answer:
@@ -93,7 +93,7 @@ def preprocess(path_to_data,
 				if len(tokens_ques) > ntokens_question:
 					ntokens_question = len(tokens_ques)
 				
-				for token in tokens_ques+tokens_ans:
+				for token in tokens_ques + tokens_ans:
 					if token not in word_freq:
 						word_freq[token] = 1
 					else:
@@ -137,7 +137,7 @@ def preprocess(path_to_data,
 		embeddings[1] = np.random.rand(1, embeddings.shape[1])
 
 		# normalizing embedding matrix
-		# altenate: just normalize the embeddings of <eos> and <sos>
+		# alternate: just normalize the embeddings of <eos> and <sos>
 		for i in range(len(embeddings)):
 			l2_norm = ((embeddings[i, :]*embeddings[i, :]).sum())**0.5
 			if l2_norm > 0.5:
