@@ -337,10 +337,10 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	# time and cost will be output to the text file in BugReports folder
 	if len(sys.argv) > 2:
 		EPOCH_START = int(sys.argv[2].split('_')[-1].split('.')[0])
-		training_output = open('../../BugReports/lfe_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','a')
+		training_output = open('../../BugReports/lfe_mask_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','a')
 	else:
 		EPOCH_START = 0
-		training_output = open('../../BugReports/lfe_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','w')
+		training_output = open('../../BugReports/lfe_mask_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','w')
 
 	for epoch in range(EPOCH_START, EPOCHS):
 		train_data.reset()
@@ -377,9 +377,9 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 				params[key] = val.get_value()
 
 			# numpy saving
-			np.savez(MODEL_DIR + 'LFE/lfe_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
-			np.savez(MODEL_DIR + 'Backup/lfe_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)			
-			np.save(MODEL_DIR + 'Backup/lfe_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npy', params)
+			np.savez(MODEL_DIR + 'LFE/lfe_mask_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
+			np.savez(MODEL_DIR + 'Backup/lfe_mask_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)			
+			np.save(MODEL_DIR + 'Backup/lfe_mask_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npy', params)
 			print 'Done!'
 
 		print 'Completed Epoch ', epoch + 1 
@@ -454,4 +454,5 @@ else:
 
 			history[hislen: hislen + ans_end, :] = out[:ans_end, :]
 			hislen += ans_end
+		
 		hislen = 0
