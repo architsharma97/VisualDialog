@@ -19,7 +19,7 @@ class data():
 
 	def get_counts(self):
 		# for questions asked at different positions
-		que_by_ans_tokens = [{}] * 10
+		que_by_ans_tokens = [{} for i in range(10)]
 		que_by_his_tokens= {}
 		que_sizes = np.zeros((len(self.que), ), dtype=np.int16)
 		his_sizes = np.zeros((len(self.que), ), dtype=np.int16)
