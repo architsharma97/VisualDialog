@@ -60,7 +60,7 @@ MAX_TOKENS = 60
 GRAD_CLIP = 5.0
 
 # number of epochs
-EPOCHS = 100
+EPOCHS = 1000
 
 # training parameters
 reduced_instances = -1
