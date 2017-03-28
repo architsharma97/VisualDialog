@@ -279,7 +279,7 @@ if len(sys.argv) <=1:
 			# numpy saving
 			np.savez(MODEL_DIR + 'Seq2Seq/seq2seq_mask_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
 			np.savez(MODEL_DIR + 'Backup/seq2seq_mask_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npz', **params)
-			np.save(MODEL_DIR + 'Backup/seq2seq_mask_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npy', params)
+			# np.save(MODEL_DIR + 'Backup/seq2seq_mask_' + str(reduced_instances) + '_' + str(learning_rate) + '_' + str(epoch + 1)+'.npy', params)
 			print 'Done!'
 
 		print 'Completed Epoch ', epoch + 1 
