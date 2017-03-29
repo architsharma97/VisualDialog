@@ -308,10 +308,19 @@ else:
 			out_idx = np.argmax(out, axis=1)
 			out = np.transpose(embed)[out_idx]
 
+			ans_end = MAX_TOKENS
+			for j in out_idx:
+				if j == word_idx_map['<eos>']:
+					ans_end = j + 1
+					print '<eos>'
+					break
+				print idx_word_map[j],
+
 			# extract ranking of correct option
 			scores = []
 			for options_i, option in enumerate(answers_options[idx][i]):
-				score = (out[:len(option), :]*option).sum()/option.shape[0]
+				len_eval = min(len(option), ans_end)
+				score = (out[:len_eval, :]*option[: len_eval, :]).sum()/len_eval
 				scores.append([score, options_i])
 				# print score
 			
@@ -327,9 +336,3 @@ else:
 				rank_file.write(str(rank) + ',' + str(scores[cor]) + '\n')
 
 			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank 
-
-			for j in out_idx:
-				if j == word_idx_map['<eos>']:
-					print '<eos>'
-					break
-				print idx_word_map[j],
