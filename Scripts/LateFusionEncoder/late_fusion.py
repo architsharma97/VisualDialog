@@ -418,10 +418,19 @@ else:
 			out_idx = np.argmax(out, axis=1)
 			out = np.transpose(embed)[out_idx]
 
+			# find <eos> token in the generated answer, if any
+			ans_end = MAX_TOKENS
+			for j in out_idx:
+				if j == word_idx_map['<eos>']:
+					ans_end = j + 1
+					print '<eos>'
+					break
+				print idx_word_map[j],
+
 			# extract ranking of correct option
 			scores = []
 			for options_i, option in enumerate(answers_options[idx][i]):
-				score = (out[:len(option), :]*option).sum()/option.shape[0]
+				score = (out[:min(ans_end, len(option)), :]*option[:min(ans_end, len(option)), :]).sum()/min(ans_end, len(option))
 				scores.append([score, options_i])
 				# print score
 			
@@ -443,15 +452,7 @@ else:
 			history[hislen : hislen + questions[idx][i].shape[0] - 2, :] = questions[idx][i][1:-1, :]
 			hislen += questions[idx][i].shape[0] - 2
 
-			# append answer to history. Find <eos> token in the generated answer, if any.
-			ans_end = MAX_TOKENS
-			for j in out_idx:
-				if j == word_idx_map['<eos>']:
-					ans_end = j + 1
-					print '<eos>'
-					break
-				print idx_word_map[j],
-
+			# append answer to history
 			history[hislen: hislen + ans_end, :] = out[:ans_end, :]
 			hislen += ans_end
 		
