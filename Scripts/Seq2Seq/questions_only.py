@@ -78,7 +78,7 @@ EMBEDDINGS_DIM = embed.shape[0]
 
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	print "Preparing minibatches"
-	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=32)
+	train_data = minibatch.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=64)
 
 def initialize(address=None):
 	'''
