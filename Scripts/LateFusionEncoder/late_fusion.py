@@ -445,7 +445,7 @@ else:
 					break
 
 			if len(sys.argv) > 3:
-				rank_file.write(str(rank) + ',' + str(scores[rank-1][0]) + '\n')
+				rank_file.write(str(rank) + ', ' + str(scores[rank-1][0]) + '\n')
 
 			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
 
