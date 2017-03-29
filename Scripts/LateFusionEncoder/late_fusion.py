@@ -444,8 +444,8 @@ else:
 					rank = r + 1
 					break
 
-			if len(sys.argv) > 2:
-				rank_file.write(str(rank) + ',' + str(scores[cor]) + '\n')
+			if len(sys.argv) > 3:
+				rank_file.write(str(rank) + ',' + str(scores[rank-1][0]) + '\n')
 
 			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
 

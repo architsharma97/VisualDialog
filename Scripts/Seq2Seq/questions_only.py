@@ -296,7 +296,7 @@ else:
 	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
 
 	if len(sys.argv) > 3:
-		rank_file = open(sys.argv[2], 'w')
+		rank_file = open(sys.argv[3], 'w')
 
 	for idx in range(image_features.shape[0]):
 		print "Image: ", idx + 1
@@ -332,7 +332,7 @@ else:
 					rank = r + 1
 					break
 			
-			if len(sys.argv) > 2:
+			if len(sys.argv) > 3:
 				rank_file.write(str(rank) + ',' + str(scores[cor]) + '\n')
 
 			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank 
