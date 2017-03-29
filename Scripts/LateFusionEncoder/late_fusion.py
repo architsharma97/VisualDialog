@@ -400,8 +400,10 @@ else:
 
 	history = np.zeros((1000, EMBEDDINGS_DIM), dtype=np.float32)
 	hislen = 0
-	if len(sys.argv) > 2:
-		rank_file = open(sys.argv[2], 'w')
+
+	if len(sys.argv) > 3:
+		print "Opened rank file"
+		rank_file = open(sys.argv[3], 'w')
 
 	for idx in range(image_features.shape[0]):
 		print "Image: ", idx + 1
@@ -430,7 +432,7 @@ else:
 			# extract ranking of correct option
 			scores = []
 			for options_i, option in enumerate(answers_options[idx][i]):
-				score = (out[:min(ans_end, len(option)), :]*option[:min(ans_end, len(option)), :]).sum()/min(ans_end, len(option))
+				score = (out[:min(ans_end, len(option)), :] * option[:min(ans_end, len(option)), :]).sum()/min(ans_end, len(option))
 				scores.append([score, options_i])
 				# print score
 			
@@ -441,7 +443,7 @@ else:
 				if cor == pair[1]:
 					rank = r + 1
 					break
-			
+
 			if len(sys.argv) > 2:
 				rank_file.write(str(rank) + ',' + str(scores[cor]) + '\n')
 

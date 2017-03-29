@@ -295,7 +295,7 @@ else:
 	inps = [que]
 	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
 
-	if len(sys.argv) > 2:
+	if len(sys.argv) > 3:
 		rank_file = open(sys.argv[2], 'w')
 
 	for idx in range(image_features.shape[0]):

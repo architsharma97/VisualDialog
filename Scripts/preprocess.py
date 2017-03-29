@@ -308,9 +308,9 @@ def preprocess(path_to_data,
 
 					for i, token in enumerate(tokens):
 						if token in word_idx_map:
-							sentence_matrix[i + 1, :] = embeddings[word_idx_map[token]]
+							sentence_matrix[i, :] = embeddings[word_idx_map[token]]
 						else:
-							sentence_matrix[i + 1, :] = embeddings[word_idx_map['<unk>']]
+							sentence_matrix[i, :] = embeddings[word_idx_map['<unk>']]
 
 					sentence_matrix[-1, :] = embeddings[word_idx_map['<eos>']]
 					answer_options_for_this_question.append(sentence_matrix)
