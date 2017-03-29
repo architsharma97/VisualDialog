@@ -30,7 +30,7 @@ lstm_prefix_d = 'lstm_d'
 MAX_TOKENS = 60
 
 # specify number of epochs to be trained for
-EPOCHS = 100
+EPOCHS = 150
 
 # clip gradients beyond certain magnitude
 GRAD_CLIP = 5.0
