@@ -73,7 +73,7 @@ else:
 																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=3)
+																		 reduced_instances=1000)
 EMBEDDINGS_DIM = embed.shape[0]
 
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
@@ -320,7 +320,7 @@ else:
 			scores = []
 			for options_i, option in enumerate(answers_options[idx][i]):
 				len_eval = min(len(option), ans_end)
-				score = (out[:len_eval, :]*option[: len_eval, :]).sum()/len_eval
+				score = (out[:len_eval, :] * option[: len_eval, :]).sum()/len_eval
 				scores.append([score, options_i])
 				# print score
 			
