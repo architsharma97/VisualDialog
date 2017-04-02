@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 150
 
 # training parameters
-reduced_instances = -1
+reduced_instances = 
 learning_rate = 0.001
 
 print "Loading embedding matrix"
@@ -120,7 +120,7 @@ EMBEDDINGS_DIM = embed.shape[0]
 
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	print "Preparing minibatches"
-	train_data = minibatch_memNN.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=3)
+	train_data = minibatch_memNN.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=64)
 
 def initialize(address=None):
 	'''
