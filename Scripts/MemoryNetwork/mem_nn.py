@@ -206,7 +206,7 @@ def build_encoder(tparams):
 	
 	in_2 = T.as_tensor_variable(out_1[0])
 
-	out_2 = lstm_layer(tparams, que, _concat(lstm_prefix_q, 2), mask=qmask, n_steps=qsteps)
+	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_q, 2), mask=qmask, n_steps=qsteps)
 
 	qcode = out_2[0][-1]
 
@@ -312,13 +312,13 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	# answer tensor should be a binary tensor with 1's at the positions which needs to be included
 	# timesteps x number of answers in minibatch x vocabulary size
 	ans = T.tensor3('ans', dtype='int8')
-
+	
 	print "Building decoder"
 	pred = build_decoder(tparams, memcode, ans.shape[0])
 
 	print "Building cost function"
 	# cost function
-	cost = (-T.log(pred) * ans).sum()
+	cost = ((-T.log(pred) * ans) * ans_mask).sum()
 
 	inps = [img, que, qmask, his, hmask, ans]
 
