@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 150
 
 # training parameters
-reduced_instances = 1
+reduced_instances = -1
 learning_rate = 0.001
 
 print "Loading embedding matrix"
@@ -120,7 +120,7 @@ EMBEDDINGS_DIM = embed.shape[0]
 
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	print "Preparing minibatches"
-	train_data = minibatch_memNN.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=64)
+	train_data = minibatch_memNN.data(image_features, questions_tensor, answers_tensor, answers_tokens_idx, len(idx_word_map), batch_size=3)
 
 def initialize(address=None):
 	'''
@@ -370,7 +370,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 		epoch_start = time.time()
 
 		for batch_idx in range(train_data.batches):
-			# ibatch, qbatch, mqbatch, hbatch, mhbatch, abatch = train_data.get_batch_lfe()
+			# ibatch, qbatch, mqbatch, hbatch, mhbatch, abatch = train_data.get_batch()
 			# print 'ibatch:', ibatch.shape, 'qbatch:', qbatch.shape, 'hbatch:', hbatch.shape, 'abatch:', abatch.shape
 			
 			# batch_cost, memcode, i, q, qm, h, hm = f_cost(ibatch, qbatch, mqbatch, hbatch, mhbatch, abatch)

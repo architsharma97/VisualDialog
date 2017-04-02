@@ -15,6 +15,7 @@ class data():
 		print 'Batch Size: ' + str(batch_size)
 		print 'Embedding Size: ' + str(self.embed_size)
 
+		self.get_counts()
 
 	def get_counts(self):
 		# get number of batches
@@ -23,12 +24,13 @@ class data():
 		if num_images%self.batch_size:
 			self.batches += 1
 
+		self.batches *= 10
 		print "Number of Batches: " + str(self.batches)
 		
 		self.img_order = np.asarray([i for i in range(num_images)])
 		
 		# get max lengths
-		max_fact_length = np.zeros((num_images, ) dtype=np.int32)
+		max_fact_length = np.zeros((num_images, ), dtype=np.int32)
 		questions_length = np.zeros((self.que.shape[0], ), dtype=np.int32)
 		answers_length = np.zeros((self.ans_tokens.shape[0], ), dtype=np.int32)
 		
@@ -38,7 +40,7 @@ class data():
 
 			for j in range(10):
 				if j <= 9:
-					max_len = max(max_len, self.que[i*10 + j].shape[0] + self.ans[i*11 + j + 1] - 2)
+					max_len = max(max_len, self.que[i*10 + j].shape[0] + self.ans[i*11 + j + 1].shape[0] - 2)
 				
 				questions_length[i*10 + j] = self.que[i*10 + j].shape[0]
 				answers_length[i*10 + j] = self.ans_tokens[i*10 + j].shape[0]
@@ -116,7 +118,7 @@ class data():
 			cur_ans = self.ans_tokens[qu_idx[idx]]
 			# answer_mask[:atok_len, idx] = 1
 			for j in range(atok_len):
-				answer_batch[j, i, cur_ans[j]] = 1
+				answer_batch[j, idx, cur_ans[j]] = 1
 
 		facts.append(fact_embeddings)
 		facts_mask.append(fact_mask_array)
