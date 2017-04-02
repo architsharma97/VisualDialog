@@ -5,11 +5,17 @@
 mkdir Training/
 cd Training/
 wget "http://computing.ece.vt.edu/~abhshkdz/data/visdial/visdial_0.5_train.json"
+wget "https://computing.ece.vt.edu/~abhshkdz/data/visdial/visdial_0.9_train.zip"
+unzip visdial_0.9_train.zip
+rm visdial_0.9_train.zip
 
 # validation
 mkdir ../Validation/
 cd ../Validation/
 wget "http://computing.ece.vt.edu/~abhshkdz/data/visdial/visdial_0.5_val.json"
+wget "https://computing.ece.vt.edu/~abhshkdz/data/visdial/visdial_0.9_val.zip"
+unzip visdial_0.9_val.zip
+rm visdial_0.9_val.zip
 
 # test
 mkdir ../Test/
