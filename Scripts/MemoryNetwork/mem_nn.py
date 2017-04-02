@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 150
 
 # training parameters
-reduced_instances = -1
+reduced_instances = 1
 learning_rate = 0.001
 
 print "Loading embedding matrix"
@@ -318,7 +318,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 
 	print "Building cost function"
 	# cost function
-	cost = ((-T.log(pred) * ans) * ans_mask).sum()
+	cost = (-T.log(pred) * ans).sum()
 
 	inps = [img, que, qmask, his, hmask, ans]
 
