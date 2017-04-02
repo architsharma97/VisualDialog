@@ -182,7 +182,7 @@ def build_lfe(tparams):
 		qmask = T.matrix('qmask', dtype='float32')
 		hmask = T.matrix('hmask', dtype='float32')
 	else:
-		# validation does not require masking as it is stochastic
+		# validation does not require masking as it is treated one step at a time
 		qmask = None
 		hmask = None
 
@@ -270,7 +270,7 @@ def build_decoder(tparams, lfcode, max_steps):
 
 	return T.as_tensor_variable(soft_tokens)
 
-if len(sys.argv) > 1:
+if len(sys.argv) > 2:
 	print "Initializating parameters for model"
 	tparams = initialize(sys.argv[2])
 else:
