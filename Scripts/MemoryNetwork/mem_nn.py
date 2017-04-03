@@ -419,6 +419,7 @@ else:
 	print "Building decoder"
 	pred = build_decoder(tparams, memNNcode, MAX_TOKENS)
 
+	print "Constructing graph"
 	inps = [img, que, his, hmask]
 	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
 
@@ -439,15 +440,18 @@ else:
 		capmask = np.zeros((80, 1), dtype=np.float32)
 
 		caption_len = captions[idx].shape[0]
-		cap[:caption_len, :, :] = captions[idx]
-		capmask[:caption_len, :, :] = 1.
+		cap[:caption_len, 0, :] = captions[idx]
+		capmask[:caption_len, :] = 1.
+
+		facts.append(cap)
+		factmasks.append(capmask)
 
 		# each question-answer
 		for qu_idx in range(10):
 			out = f(image_features[idx, :].reshape(1,-1),
 					questions[idx][qu_idx].reshape((questions[idx][qu_idx].shape[0], 1, questions[idx][qu_idx].shape[1])),
-					np.asarray(facts),
-					np.asarray(factmasks))
+					np.asarray(facts, dtype=np.float32),
+					np.asarray(factmasks, dtype=np.float32))
 			out = out.reshape((out.shape[0], out.shape[2]))
 			out_idx = np.argmax(out, axis=1)
 			out = np.transpose(embed)[out_idx]
@@ -463,13 +467,13 @@ else:
 
 			# extract ranking of correct option
 			scores = []
-			for options_i, option in enumerate(answers_options[idx][i]):
+			for options_i, option in enumerate(answers_options[idx][qu_idx]):
 				score = (out[:min(ans_end, len(option)), :] * option[:min(ans_end, len(option)), :]).sum()/min(ans_end, len(option))
 				scores.append([score, options_i])
 				# print score
 			
 			scores.sort(key=lambda x: x[0], reverse=True)
-			cor = int(correct_options[idx][i])
+			cor = int(correct_options[idx][qu_idx])
 			
 			for r, pair in enumerate(scores):
 				if cor == pair[1]:
