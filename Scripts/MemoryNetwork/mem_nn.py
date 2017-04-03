@@ -103,7 +103,7 @@ else:
 																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=-1)
+																		 reduced_instances=1)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
@@ -169,7 +169,7 @@ def build_encoder(tparams):
 	'''
 	global ff_prefix, lstm_prefix_q, lstm_prefix_h
 
-	def _generate_memories(his, hmask):
+	def _generate_memories(his, hmask=None):
 		# generate embedding for one history
 		hsteps = his.shape[0]
 		out_1 = lstm_layer(tparams, his, _concat(lstm_prefix_h, 1), mask=hmask, n_steps=hsteps)
@@ -192,12 +192,16 @@ def build_encoder(tparams):
 	# dialogs x max tokens x samples x embedding size
 	his = T.tensor4('his', dtype='float32')
 	
-	# steps x samples
-	qmask = T.matrix('qmask', dtype='float32')
-
 	# dialogs x max tokens x samples
 	hmask = T.tensor3('hmask', dtype='float32')
 	
+	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
+		# steps x samples
+		qmask = T.matrix('qmask', dtype='float32')
+	else:
+		# validation does not require masking as it is treated one sample at a time
+		qmask = None
+		
 	qsteps = que.shape[0]
 	memsize = his.shape[0]
 
@@ -239,7 +243,10 @@ def build_encoder(tparams):
 	memvec = fflayer(tparams, memory,_concat(ff_prefix, 2))
 	memNNcode = memvec + query
 
-	return img, que, qmask, his, hmask, memNNcode
+	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
+		return img, que, qmask, his, hmask, memNNcode
+	else:
+		return img, que, his, hmask, memNNcode
 
 def build_decoder(tparams, code, max_steps):
 	'''
@@ -289,7 +296,7 @@ def build_decoder(tparams, code, max_steps):
 
 	return T.as_tensor_variable(soft_tokens)
 
-# Complete graph
+# Complete Graph
 if len(sys.argv) > 2:
 	print "Initializating parameters for model"
 	tparams = initialize(sys.argv[2])
@@ -403,3 +410,87 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 			print 'Done!'
 
 		print 'Completed Epoch ', epoch + 1
+
+# VALIDATION
+else:
+	print "Building encoder for the model"
+	img, que, his, hmask, memNNcode = build_encoder(tparams)
+
+	print "Building decoder"
+	pred = build_decoder(tparams, memNNcode, MAX_TOKENS)
+
+	inps = [img, que, his, hmask]
+	f = theano.function(inps, pred, on_unused_input='ignore', profile=False)
+
+	if len(sys.argv) > 3:
+		print "Opened rank file"
+		rank_file = open(sys.argv[3], 'w')
+
+	# validation
+	for idx in range(image_features.shape[0]):
+		print "Image: ", idx + 1
+
+		# each fact will consist of 100 tokens, which is fixed to get a 4D tensor
+		facts = []
+		factmasks = []
+
+		# adding caption
+		cap = np.zeros((80, 1, EMBEDDINGS_DIM), dtype=np.float32)
+		capmask = np.zeros((80, 1), dtype=np.float32)
+
+		caption_len = captions[idx].shape[0]
+		cap[:caption_len, :, :] = captions[idx]
+		capmask[:caption_len, :, :] = 1.
+
+		# each question-answer
+		for qu_idx in range(10):
+			out = f(image_features[idx, :].reshape(1,-1),
+					questions[idx][qu_idx].reshape((questions[idx][qu_idx].shape[0], 1, questions[idx][qu_idx].shape[1])),
+					np.asarray(facts),
+					np.asarray(factmasks))
+			out = out.reshape((out.shape[0], out.shape[2]))
+			out_idx = np.argmax(out, axis=1)
+			out = np.transpose(embed)[out_idx]
+
+			# find <eos> token in the generated answer, if any
+			ans_end = MAX_TOKENS
+			for j in out_idx:
+				if j == word_idx_map['<eos>']:
+					ans_end = j + 1
+					print '<eos>'
+					break
+				print idx_word_map[j],
+
+			# extract ranking of correct option
+			scores = []
+			for options_i, option in enumerate(answers_options[idx][i]):
+				score = (out[:min(ans_end, len(option)), :] * option[:min(ans_end, len(option)), :]).sum()/min(ans_end, len(option))
+				scores.append([score, options_i])
+				# print score
+			
+			scores.sort(key=lambda x: x[0], reverse=True)
+			cor = int(correct_options[idx][i])
+			
+			for r, pair in enumerate(scores):
+				if cor == pair[1]:
+					rank = r + 1
+					break
+
+			if len(sys.argv) > 3:
+				rank_file.write(str(rank) + ', ' + str(scores[rank-1][0]) + '\n')
+
+			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
+
+			# append QA to history
+			fact = np.zeros((80, 1, EMBEDDINGS_DIM), dtype=np.float32)
+			factmask = np.zeros((80, 1), dtype=np.float32)
+
+			qlen = questions[idx][qu_idx].shape[0] - 1
+			fact[:qlen, 0, :] = questions[idx][qu_idx][:-1, :]
+			fact[qlen: qlen + ans_end, 0, :] = out[:ans_end, :]
+
+			factmask[:qlen + ans_end, :] = 1.
+
+			# append the new facts and corresponding fact masks
+			facts.append(fact)
+			factmasks.append(factmask)
