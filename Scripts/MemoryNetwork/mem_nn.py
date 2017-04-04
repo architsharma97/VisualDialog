@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 150
 
 # training parameters
-reduced_instances = -1
+reduced_instances = 1
 learning_rate = 0.001
 
 print "Loading embedding matrix"
@@ -169,7 +169,7 @@ def build_encoder(tparams):
 	'''
 	global ff_prefix, lstm_prefix_q, lstm_prefix_h
 
-	def _generate_memories(his, hmask=None):
+	def _generate_memories(his, hmask):
 		# generate embedding for one history
 		hsteps = his.shape[0]
 		out_1 = lstm_layer(tparams, his, _concat(lstm_prefix_h, 1), mask=hmask, n_steps=hsteps)
