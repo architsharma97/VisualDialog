@@ -103,7 +103,7 @@ else:
 																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=1)
+																		 reduced_instances=3)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
@@ -391,7 +391,7 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 			epoch_cost += cost
 			
 			if not batch_idx % 100:
-				training_output.write('Epoch: ' + str(epoch) + ', Batch ID: ' + str(batch_idx) + ', Cost: ' + str(cost) + ', Time: ' + str(td) + '\n')
+				training_output.write('Epoch: ' + str(epoch + 1) + ', Batch ID: ' + str(batch_idx) + ', Cost: ' + str(cost) + ', Time: ' + str(td) + '\n')
 
 		print 'Epoch:', epoch + 1, 'Cost:', epoch_cost, 'Time: ', time.time()-epoch_start
 		training_output.write('Epoch: ' + str(epoch + 1) + ', Cost: ' + str(epoch_cost) + ', Time: ' + str(time.time()-epoch_start) + '\n')
