@@ -5,8 +5,11 @@ from keras.applications.vgg16 import preprocess_input
 from keras.models import Model
 
 import numpy as np
-from gensim.models import Word2Vec
-
+try:
+	from gensim.models import Word2Vec
+except:
+	print "Unable to load gensim"
+	
 import scipy.io
 
 # use model.predict(process_image(img_path)) to get the fc2 layer output
