@@ -483,7 +483,7 @@ else:
 			if len(sys.argv) > 3:
 				rank_file.write(str(rank) + ', ' + str(scores[rank-1][0]) + '\n')
 
-			# print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
+			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
 
 			# append QA to history
 			fact = np.zeros((80, 1, EMBEDDINGS_DIM), dtype=np.float32)
