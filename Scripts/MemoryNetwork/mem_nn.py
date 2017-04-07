@@ -461,9 +461,9 @@ else:
 			for j in out_idx:
 				if j == word_idx_map['<eos>']:
 					ans_end = j + 1
-					# print '<eos>'
+					print '<eos>'
 					break
-				# print idx_word_map[j],
+				print idx_word_map[j],
 
 			# extract ranking of correct option
 			scores = []
