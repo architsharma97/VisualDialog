@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 150
 
 # training parameters
-reduced_instances = 5
+reduced_instances = -1
 learning_rate = 0.001
 
 print "Loading embedding matrix"
@@ -103,7 +103,7 @@ else:
 																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=-1)
+																		 reduced_instances=5)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
