@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 150
 
 # training parameters
-reduced_instances = 1
+reduced_instances = 5
 learning_rate = 0.001
 
 print "Loading embedding matrix"
