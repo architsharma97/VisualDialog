@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 150
 
 # training parameters
-reduced_instances = -1
+reduced_instances = 3
 learning_rate = 0.001
 variant = True
 
@@ -319,9 +319,6 @@ def build_encoder_variant(tparams):
 								n_steps=memsize)
 
 	mems = T.as_tensor_variable(mems)
-	# arrange by samples
-	mems_by_samples = mems.dimshuffle(1, 0, 2)
-	num_samples = mems.shape[0]
 
 	# compute attention
 	attention_matrix = (mems * query).sum(axis=2)
@@ -329,6 +326,10 @@ def build_encoder_variant(tparams):
 	# max pool: consider only the max scoring memory
 	max_memory_indices = T.argmax(attention_matrix, axis=0, keepdims=False).T
 	
+	# arrange by samples
+	mems_by_samples = mems.dimshuffle(1, 0, 2)
+	num_samples = mems_by_samples.shape[0]
+
 	# memories pooled
 	mems_pooled, updates = theano.scan(_get_memories,
 										 sequences=[mems_by_samples, max_memory_indices],
