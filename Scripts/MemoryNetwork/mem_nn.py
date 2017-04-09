@@ -65,6 +65,7 @@ EPOCHS = 150
 # training parameters
 reduced_instances = -1
 learning_rate = 0.001
+variant = True
 
 print "Loading embedding matrix"
 try:
@@ -103,7 +104,7 @@ else:
 																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=-1)
+																		 reduced_instances=1)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
@@ -137,7 +138,10 @@ def initialize(address=None):
 		# feedforward layer for question and image to generate the query vector
 		params = param_init_fflayer(params, _concat(ff_prefix, 1), FF_IN, FF_OUT)
 		# feedforward layer for memory vector
-		params = param_init_fflayer(params, _concat(ff_prefix, 2), LSTM_H_OUT, FF_OUT)
+		if variant:
+			params = param_init_fflayer(params, _concat(ff_prefix, 2), LSTM_H_OUT + LSTM_Q_OUT, FF_OUT)
+		else:
+			params = param_init_fflayer(params, _concat(ff_prefix, 2), LSTM_H_OUT, FF_OUT)
 		
 		# lstm layers
 		# question encoding layers
@@ -163,6 +167,7 @@ def initialize(address=None):
 
 	return tparams
 
+# memory network encoder as proposed in the original paper
 def build_encoder(tparams):
 	'''
 	Builds a computational graph for a memory network encoder
@@ -189,10 +194,10 @@ def build_encoder(tparams):
 	# steps x samples x embedding size
 	que = T.tensor3('que', dtype='float32')
 
-	# dialogs x max tokens x samples x embedding size
+	# (dialogs + caption) x max tokens x samples x embedding size
 	his = T.tensor4('his', dtype='float32')
 	
-	# dialogs x max tokens x samples
+	# (dialogs + caption) x max tokens x samples
 	hmask = T.tensor3('hmask', dtype='float32')
 	
 	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
@@ -237,12 +242,102 @@ def build_encoder(tparams):
 										 sequences=[mems, attention_matrix],
 										 n_steps=memsize)
 
+	# mean pooling
 	memory = T.as_tensor_variable(mems_weighted).sum(axis=0)
 
 	# passing through fully connected layer
 	memvec = fflayer(tparams, memory,_concat(ff_prefix, 2))
 	memNNcode = memvec + query
 
+	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
+		return img, que, qmask, his, hmask, memNNcode
+	else:
+		return img, que, his, hmask, memNNcode
+
+# custom encoder, with small variations from the encoder proposed in the original paper
+def build_encoder_variant(tparams):
+	'''
+	Builds a computational graph for a custom memory network encoder.
+	Variation:
+	1) Memory Elements are max pooled.
+	2) Query vector and Memory Vector are concatenated and passed throug a non-linearity.
+	'''
+	global ff_prefix, lstm_prefix_q, lstm_prefix_h
+
+	def _generate_memories(his, hmask):
+		# generate embedding for one history
+		hsteps = his.shape[0]
+		out_1 = lstm_layer(tparams, his, _concat(lstm_prefix_h, 1), mask=hmask, n_steps=hsteps)
+
+		in_2 = T.as_tensor_variable(out_1[0])
+
+		out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_h, 2), mask=hmask, n_steps=hsteps)
+
+		return T.as_tensor_variable(out_2[0][-1])
+	
+	def _weigh_memories(mems, attention_vector):
+		return (mems.T * attention_vector).T
+
+	# image features extracted from vgg16
+	img = T.matrix('img', dtype='float32')
+
+	# steps x samples x embedding size
+	que = T.tensor3('que', dtype='float32')
+
+	# (dialogs + caption) x max tokens x samples x embedding size
+	his = T.tensor4('his', dtype='float32')
+	
+	# (dialogs + caption) x max tokens x samples
+	hmask = T.tensor3('hmask', dtype='float32')
+	
+	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
+		# steps x samples
+		qmask = T.matrix('qmask', dtype='float32')
+	else:
+		# validation does not require masking as it is treated one sample at a time
+		qmask = None
+		
+	qsteps = que.shape[0]
+	memsize = his.shape[0]
+
+	# encode questions
+	out_1 = lstm_layer(tparams, que, _concat(lstm_prefix_q, 1), mask=qmask, n_steps=qsteps)
+	
+	in_2 = T.as_tensor_variable(out_1[0])
+
+	out_2 = lstm_layer(tparams, in_2, _concat(lstm_prefix_q, 2), mask=qmask, n_steps=qsteps)
+
+	qcode = out_2[0][-1]
+
+	# generate the query vector
+	in_3 = T.concatenate([img, qcode], axis=1)
+	query = fflayer(tparams, in_3, _concat(ff_prefix, 1))
+
+	# create memory
+	mems, updates = theano.scan(_generate_memories, 
+								sequences=[his, hmask],
+								n_steps=memsize)
+
+	mems = T.as_tensor_variable(mems)
+
+	# compute attention
+	attention_matrix = (mems * query).sum(axis=2)
+
+	# max pool: consider only the max scoring memory
+	attention_matrix = T.argmax(attention_matrix, axis=1)
+
+	# weighted memories
+	mems_weighted, updates = theano.scan(_weigh_memories,
+										 sequences=[mems, attention_matrix],
+										 n_steps=memsize)
+
+	# mean pooling
+	memory = T.as_tensor_variable(mems_weighted).sum(axis=0)
+
+	# passing through fully connected layer
+	in_4 = T.concatenate([query, memory], axis=1)
+	memNNcode = fflayer(tparams, in_4,_concat(ff_prefix, 2))
+	
 	if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 		return img, que, qmask, his, hmask, memNNcode
 	else:
@@ -306,7 +401,10 @@ else:
 # TRAINING
 if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	print "Building encoder for the model"
-	img, que, qmask, his, hmask, memcode = build_encoder(tparams)
+	if variant:
+		img, que, qmask, his, hmask, memcode = build_encoder_variant(tparams)
+	else:
+		img, que, qmask, his, hmask, memcode = build_encoder(tparams)
 
 	# printing value of encoder output
 	memc_printed = theano.printing.Print('Encoded Value: ')(memcode)
@@ -414,8 +512,11 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 # VALIDATION
 else:
 	print "Building encoder for the model"
-	img, que, his, hmask, memNNcode = build_encoder(tparams)
-
+	if variant:
+		img, que, his, hmask, memNNcode = build_encoder_variant(tparams)
+	else:
+		img, que, his, hmask, memNNcode = build_encoder(tparams)
+	
 	print "Building decoder"
 	pred = build_decoder(tparams, memNNcode, MAX_TOKENS)
 
