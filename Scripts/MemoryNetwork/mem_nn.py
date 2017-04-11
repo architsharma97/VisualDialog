@@ -104,7 +104,7 @@ else:
 																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=3)
+																		 reduced_instances=-1)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
