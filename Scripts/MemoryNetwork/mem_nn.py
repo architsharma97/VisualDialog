@@ -162,7 +162,7 @@ def initialize(address=None):
 		if custom_init:
 			# use the weights from late fusion encoder to initialize memory network
 			# will need to reinitialize one extra fully connected layer for memory vector
-			
+			print "Initializing using the weights of Late Fusion model"
 			custom_params = OrderedDict()
 			for key, val in params.iteritems():
 				if key == 'ff_W':
