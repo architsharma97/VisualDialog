@@ -63,7 +63,7 @@ GRAD_CLIP = 5.0
 EPOCHS = 150
 
 # training parameters
-reduced_instances = 2
+reduced_instances = -1
 learning_rate = 0.001
 variant = False
 custom_init = True
@@ -161,13 +161,24 @@ def initialize(address=None):
 		params = np.load(address)
 		if custom_init:
 			# use the weights from late fusion encoder to initialize memory network
-			#  will need to reinitialize one extra fully connected layer
-			# feedforward layer for memory vector
+			# will need to reinitialize one extra fully connected layer for memory vector
+			
+			custom_params = OrderedDict()
+			for key, val in params.iteritems():
+				if key == 'ff_W':
+					custom_params['ff_1_W'] = val
+				elif key == 'ff_b':
+					custom_params['ff_1_b'] = val
+				else:
+					custom_params[key] = val
+
+			params = custom_params
+
 			if variant:
 				params = param_init_fflayer(params, _concat(ff_prefix, 2), LSTM_H_OUT + LSTM_Q_OUT, FF_OUT)
 			else:
 				params = param_init_fflayer(params, _concat(ff_prefix, 2), LSTM_H_OUT, FF_OUT)
-					
+
 	# initialize theano shared variables for params
 	tparams = OrderedDict()
 	for key, val in params.iteritems():
