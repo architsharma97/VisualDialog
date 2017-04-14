@@ -104,7 +104,7 @@ else:
 																		 load_embedding_matrix=True,
 																		 split='Val',
 																		 save_data=False,
-																		 reduced_instances=-1)
+																		 reduced_instances=3)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
@@ -566,9 +566,9 @@ else:
 			for j in out_idx:
 				if j == word_idx_map['<eos>']:
 					ans_end = j + 1
-					# print '<eos>'
+					print '<eos>'
 					break
-				# print idx_word_map[j],
+				print idx_word_map[j],
 
 			# extract ranking of correct option
 			scores = []
@@ -588,7 +588,7 @@ else:
 			if len(sys.argv) > 3:
 				rank_file.write(str(rank) + ', ' + str(scores[rank-1][0]) + '\n')
 
-			# print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
+			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
 
 			# append QA to history
 			fact = np.zeros((80, 1, EMBEDDINGS_DIM), dtype=np.float32)
