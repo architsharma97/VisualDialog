@@ -174,6 +174,7 @@ def initialize(address=None):
 
 			params = custom_params
 
+			params = param_init_fflayer(params, _concat(ff_prefix, 1), FF_IN, FF_OUT)
 			if variant:
 				params = param_init_fflayer(params, _concat(ff_prefix, 2), LSTM_H_OUT + LSTM_Q_OUT, FF_OUT)
 			else:
