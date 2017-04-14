@@ -1,6 +1,6 @@
 This repository hosts the work done on the [Visual Dialog](http://visualdialog.org/) problem. The work was mentored by [Dr. Vinay Namboodiri](http://www.cse.iitk.ac.in/users/vinaypn/).
 
-Work on most of this project has been done in [Theano](http://deeplearning.net/software/theano/) and in python.
+Work for this project has been done in [Theano](http://deeplearning.net/software/theano/).
 
 To begin using this repository, clone it and run the following commands once you are in the cloned folder.
 

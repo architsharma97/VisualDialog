@@ -238,7 +238,7 @@ def preprocess(path_to_data,
 		answers_tensor = np.asarray(answers_tensor)
 		answers_matrix = np.asarray(answers_matrix)
 	
-	elif split == 'Val':
+	elif split == 'Val' or split == 'Test':
 		'''
 		Hierarchy will be followed in construction of data for Validation data set.
 		All questions, correct options will be grouped according to the image they belong to.
@@ -349,5 +349,5 @@ def preprocess(path_to_data,
 		if split == 'Train':
 			return image_features, questions_tensor, answers_tensor, answers_matrix
 		
-		elif split == 'Val':
+		elif split == 'Val' or split == 'Test':
 			return image_features, captions, questions, answer_options, correct_options

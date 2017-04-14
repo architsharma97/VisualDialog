@@ -101,7 +101,7 @@ else:
 	image_features, captions, questions, answers_options, correct_options = preprocess(DATA_DIR,
 																		 load_dict=True,
 																		 load_embedding_matrix=True,
-																		 split='Val',
+																		 split='Test',
 																		 save_data=False,
 																		 reduced_instances=-1)
 	print 'Number of images: ', image_features.shape[0]
