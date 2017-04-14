@@ -159,7 +159,7 @@ def initialize(address=None):
 
 	else:
 		params = np.load(address)
-		if custom_init:
+		if custom_init and (len(sys.argv) <=1 or int(sys.argv[1]) == 0):
 			# use the weights from late fusion encoder to initialize memory network
 			# will need to reinitialize one extra fully connected layer for memory vector
 			print "Initializing using the weights of Late Fusion model"
