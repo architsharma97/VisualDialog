@@ -425,9 +425,9 @@ else:
 			for j in out_idx:
 				if j == word_idx_map['<eos>']:
 					ans_end = j + 1
-					print '<eos>'
+					# print '<eos>'
 					break
-				print idx_word_map[j],
+				# print idx_word_map[j],
 
 			# extract ranking of correct option
 			scores = []
@@ -447,7 +447,7 @@ else:
 			if len(sys.argv) > 3:
 				rank_file.write(str(rank) + ', ' + str(scores[rank-1][0]) + '\n')
 
-			print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
+			# print "Correct option's score:", scores[rank-1][0], 'at rank:', rank
 
 			# append question to history
 			hislen -= 1
