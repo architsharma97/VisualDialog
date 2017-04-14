@@ -485,12 +485,12 @@ if len(sys.argv) <=1 or int(sys.argv[1]) == 0:
 	lrate = learning_rate
 
 	# time and cost will be output to the text file in BugReports folder
-	if len(sys.argv) > 2:
+	if len(sys.argv) > 2 and not custom_init:
 		EPOCH_START = int(sys.argv[2].split('_')[-1].split('.')[0])
-		training_output = open('../../BugReports/memory_network_lf_init_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','a')
+		training_output = open('../../BugReports/memory_network_lfinit_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','a')
 	else:
 		EPOCH_START = 0
-		training_output = open('../../BugReports/memory_network_lf_init_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','w')
+		training_output = open('../../BugReports/memory_network_lfinit_train_output_' + str(reduced_instances) + '_' + str(learning_rate) + '.txt','w')
 
 	for epoch in range(EPOCH_START, EPOCHS):
 		train_data.reset()
