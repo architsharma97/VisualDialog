@@ -103,9 +103,9 @@ else:
 	image_features, captions, questions, answers_options, correct_options = preprocess(DATA_DIR,
 																		 load_dict=True,
 																		 load_embedding_matrix=True,
-																		 split='Val',
+																		 split='Test',
 																		 save_data=False,
-																		 reduced_instances=3)
+																		 reduced_instances=-1)
 	print 'Number of images: ', image_features.shape[0]
 
 if not load_embedding_data:
@@ -162,6 +162,7 @@ def initialize(address=None):
 		if custom_init and (len(sys.argv) <=1 or int(sys.argv[1]) == 0):
 			# use the weights from late fusion encoder to initialize memory network
 			# will need to reinitialize one extra fully connected layer for memory vector
+			# only valid for initializing in training
 			print "Initializing using the weights of Late Fusion model"
 			custom_params = OrderedDict()
 			for key, val in params.iteritems():
